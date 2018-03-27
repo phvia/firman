@@ -48,8 +48,11 @@ $server
 ```
 
 ## Run example:  
-`$ composer install`  
-`$ php examples/via_websocket_serv.php`  
+```shell
+$ composer require phpvia/via
+$ composer install
+$ php examples/via_websocket_serv.php
+```
 
 ## Contribute:  
 Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
