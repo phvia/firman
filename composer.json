@@ -1,0 +1,30 @@
+{
+    "name": "phpvia/via",
+    "description": "PHP multi-process and non-blocking I/O library.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "farwish",
+            "email": "farwish@foxmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0",
+        "symfony/console": "~4.0.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Via\\": "./"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Via\\": "tests/"
+        }
+    },
+    "suggest": {
+        "php": "Suggest to install newest PHP for high performance."
+    }
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+    <meta charset=utf-8>
+    <body>
+        a ws page.
+    </body>
+    <script>
+
+    //
+    // @doc https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
+    // @author farwish.com
+    //
+
+    try {
+
+        // 注意WebSocket对象的第二个可选参数表示子协议，支持字符串或数组;
+        // 这样单个server就能实现多个 websocket 子协议，即一个服务可以处理不同类型协议的交互.
+        // 构造函数在连接遇到阻塞时，将抛出异常;
+        // 连接错误则触发 error 事件, 随后是触发 close 事件，表明连接关闭.
+        var ws = new WebSocket('ws://10.0.2.15:8080');
+
+        ws.onopen = function(event) {
+
+            /*
+            if (ws.readyState == 'CONNECTING') {
+                alert('connect');
+            }
+
+            if (ws.readyState == 'OPEN') {
+                console.log('open');
+            }
+            */
+
+            ws.send('Hello 好码');
+
+        };
+
+        ws.onmessage = function(event) {
+            console.log("Receive from server: " + event.data);
+
+            setInterval(function () {
+                ws.send('EiEi吧' + new Date());
+            }, 2000)
+        };
+
+        ws.onclose = function() {
+            console.log('server closed');
+            // alert('server closed');
+        };
+
+        ws.onerror = function() {
+            console.log('server error');
+            // alert('server error');
+        };
+
+    } catch (e) {
+        // alert(e.message);
+    }
+
+    </script>
+</html>
