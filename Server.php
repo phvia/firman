@@ -342,6 +342,8 @@ class Server
      */
     public function run(): void
     {
+        global $argv;
+
         self::strict();
 
         // Combine with symfony console.
@@ -350,12 +352,12 @@ class Server
             $app->register($cmd)
                 ->setDescription(ucfirst("{$cmd} Via server"))
                 ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (support: dev, prod)', 'dev')
-                ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd) {
+                ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {
-                        $output->writeln('<info>In production mode.</info>');
+                        $output->writeln("In production mode, daemon [<info>on</info>].");
                         $this->daemon = true;
                     } else {
-                        $output->writeln('<info>In development mode.</info>');
+                        $output->writeln("In development mode, daemon [<comment>off</comment>].");
                     }
 
                     switch ($cmd) {
@@ -365,6 +367,13 @@ class Server
                             self::initializeMaster();
                             self::createServer();
                             self::forks();
+
+                            if ($this->daemon) {
+                                $output->writeln("Start success, input `php {$argv[0]} stop` to quit.");
+                            } else {
+                                $output->writeln("Start success, press `Ctrl + c` to quit.");
+                            }
+
                             self::monitor();
 
                             break;
@@ -459,11 +468,18 @@ class Server
             file_put_contents($this->serverInfo['pid_file'], $this->ppid, LOCK_EX);
             cli_set_process_title("{$this->processTitle} master process, start file ({$this->serverInfo['start_file']})");
 
-            // Install signal
+            // Install signal for master.
+            $pid_file = $this->serverInfo['pid_file'];
+            $return_value = pcntl_signal(SIGINT, function($signo, $siginfo) use ($pid_file) {
+                @unlink($pid_file);
+                exit(0);
+            });
+            if (! $return_value) {
+                throw new Exception('Install signal failed.');
+            }
         }
 
         // TODO: notice child to quit too when parent quited.
-        // TODO: when all child quit, delete pid file.
     }
 
     /**
@@ -499,6 +515,9 @@ class Server
      * Master create socket and listen, later on descriptor can be used in child.
      * If reuse port, child can create server by itself.
      *
+     * Important functions:
+     * stream_context_create => stream_socket_server => socket_import_stream => socket_set_option => stream_set_blocking
+     *
      * @throws Exception
      */
     protected function createServer(): void
@@ -519,6 +538,7 @@ class Server
                 'socket' => [
                     'bindto'        => $this->address . ':' . $this->port,
                     'backlog'       => $this->backlog,
+                    // Each child listen in same port to avoid thundering herd.
                     'so_reuseport'  => true,
                 ],
             ];
@@ -618,7 +638,7 @@ class Server
 
                 self::poll();
 
-                exit();
+                exit(0);
                 break;
             default:
                 // Parent(master) process, not do business, cant exit.
@@ -653,11 +673,10 @@ class Server
                 case SIGQUIT:
                 case SIGTERM:
                 case SIGCHLD:
-                case SIGPIPE:
-//                    $return_value = pcntl_signal($signo, function($signo, $siginfo) {
-//                        exit();
-//                    });
                     $return_value = pcntl_signal($signo, SIG_DFL);
+                    break;
+                case SIGPIPE:
+                    $return_value = pcntl_signal($signo, SIG_IGN);
                     break;
                 default:
                     break;
@@ -673,6 +692,8 @@ class Server
     /**
      * Poll on all child process.
      *
+     * Important functions:
+     *  stream_select => stream_socket_accept
      */
     protected function poll(): void
     {
@@ -792,17 +813,17 @@ class Server
         $message = "Process[{$pid}] quit, ";
 
         if (pcntl_wifexited($status)) {
-            $message .= "Normal exited with status " . pcntl_wexitstatus($status) . ", line " . __LINE__;
+            $message .= "Normal exited with status " . pcntl_wexitstatus($status);
         }
 
         if (pcntl_wifsignaled($status)) {
             $message .= "by signal " .
-                ($this->signals[ pcntl_wtermsig($status) ] ?? ($other_debug_signals[pcntl_wtermsig($status)] ?? 'Unknow')) . "(" . pcntl_wtermsig($status) . "), line " . __LINE__;
+                ($this->signals[ pcntl_wtermsig($status) ] ?? ($other_debug_signals[pcntl_wtermsig($status)] ?? 'Unknow')) . "(" . pcntl_wtermsig($status) . ")";
         }
 
         if (pcntl_wifstopped($status)) {
             $message .= "by signal (" .
-                pcntl_wstopsig($status) . "), line " . __LINE__;
+                pcntl_wstopsig($status) . ")";
         }
 
         echo $message . PHP_EOL;

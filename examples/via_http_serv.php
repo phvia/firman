@@ -7,7 +7,6 @@
  */
 
 include __DIR__ . '/../../../autoload.php';
-include __DIR__ . '/../Server.php';
 
 $socket = 'tcp://0.0.0.0:8080';
 

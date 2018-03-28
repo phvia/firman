@@ -2,8 +2,32 @@
 
 PHP multi-process and non-blocking I/O library.
 
-## Usage shown
+## Dependency
+* PHP>=7. (use many features and high performance)
+* PCNTL extension. (compile PHP with `--enable-pcntl` option to enable)
+* Sockets extension. (compile PHP with `--enable-sockets` option to enable)
 
+## Install
+```shell
+$ composer require phpvia/via
+```
+
+## Show usage / Run example  
+```shell
+# Will show usage
+
+$ php /path/to/via/examples/via_websocket_serv.php
+```
+
+```shell
+# Process control
+
+$ php /path/to/via/xxx.php start
+$ php /path/to/via/xxx.php restart
+$ php /path/to/via/xxx.php stop
+```
+
+## Do it yourself
 ```php
 # Simplest configure
 
@@ -67,20 +91,14 @@ $server
     ->run();
 ```
 
-## Run example:  
-```shell
-# Startup
+## Server work flow explain
 
-$ composer require phpvia/via
-$ composer install
-$ php /path/to/examples/via_websocket_serv.php -h
-
-# Process control command
-
-$ php xxx.php start
-$ php xxx.php restart
-$ php xxx.php stop
-```
+* Check environment.  
+* Parse command.  
+* Initialize master process information.  
+* Create socket server.  
+* Fork child process, install signal for child, poll on child.  
+* Block on master, monitor any child process exited to reload it.  
 
 ## Contribute:  
 Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
@@ -93,8 +111,13 @@ Symfony Console Component: http://symfony.com/doc/current/components/console.htm
 QQ group: 377154148
 
 ## Todo
-Implement protocol parse built-in.
+Our position is focus on socket :  
+
+Implement protocol parse built-in.  
+Support Unix domain, UDP.  
+Daemonize.
+Robustness.  
 
 ## License
-MIT
+[MIT](https://github.com/phpvia/via/blob/master/LICENSE)
 
