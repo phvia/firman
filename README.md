@@ -12,11 +12,58 @@ PHP multi-process and non-blocking I/O library.
 $ composer require phpvia/via
 ```
 
-## Show usage / Run example  
+## Run example  
 ```shell
-# Will show usage
+# Show usage
 
 $ php /path/to/via/examples/via_websocket_serv.php
+```
+
+```shell
+Via package 0.0.1
+
+Usage:
+  command [options] [arguments]
+
+Options:
+  -h, --help            Display this help message
+  -q, --quiet           Do not output any message
+  -V, --version         Display this application version
+      --ansi            Force ANSI output
+      --no-ansi         Disable ANSI output
+  -n, --no-interaction  Do not ask any interactive question
+  -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+
+Available commands:
+  help     Displays help for a command
+  list     Lists commands
+  restart  Restart Via server
+  start    Start Via server
+  stop     Stop Via server
+```
+
+```shell
+# Show usage detail
+
+$ php /path/to/via/examples/via_websocket_serv.php start -h
+```
+
+```shell
+Usage:
+  start [options]
+
+Options:
+  -e, --env=ENV         The Environment name (support: dev, prod) [default: "dev"]
+  -h, --help            Display this help message
+  -q, --quiet           Do not output any message
+  -V, --version         Display this application version
+      --ansi            Force ANSI output
+      --no-ansi         Disable ANSI output
+  -n, --no-interaction  Do not ask any interactive question
+  -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+
+Help:
+  Start Via server
 ```
 
 ```shell
