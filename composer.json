@@ -14,6 +14,9 @@
         "php": ">=7.0",
         "symfony/console": "~4.0.6"
     },
+    "require-dev": {
+        "phpunit/phpunit": "~6.5.7"
+    },
     "autoload": {
         "psr-4": {
             "Via\\": "./"
@@ -21,7 +24,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Via\\": "tests/"
+            "Via\\Tests\\": "tests/"
         }
     },
     "suggest": {

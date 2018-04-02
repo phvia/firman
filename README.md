@@ -147,6 +147,11 @@ $server
 * Fork child process, install signal for child, poll on child.  
 * Block on master, monitor any child process exited to reload it.  
 
+## Tests
+```shell
+$ ./vendor/bin/phpunit --bootstrap=vendor/autoload.php tests
+```
+
 ## Contribute:  
 Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
 

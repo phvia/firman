@@ -369,9 +369,9 @@ class Server
                             self::forks();
 
                             if ($this->daemon) {
-                                $output->writeln("Start success, input `php {$argv[0]} stop` to quit.");
+                                $output->writeln(sprintf('Start success, input `php %s stop` to quit.', $argv[0]));
                             } else {
-                                $output->writeln("Start success, press `Ctrl + c` to quit.");
+                                $output->writeln('Start success, press `Ctrl + c` to quit.');
                             }
 
                             self::monitor();
@@ -382,7 +382,7 @@ class Server
                             // Quit child.
                             self::quitChild($cmd);
 
-                            $message = "Server {$this->processTitle} {$cmd} success.";
+                            $message = sprintf('Server %s %s success.', $this->processTitle, $cmd);
 
                             exit($message . PHP_EOL);
 
@@ -394,9 +394,9 @@ class Server
                                 // Quit master.
                                 if (posix_kill($this->ppid, SIGKILL)) {
                                     @unlink($this->serverInfo['pid_file']);
-                                    $message = "Server {$this->processTitle} {$cmd} success.";
+                                    $message = sprintf("Server %s %s success.", $this->processTitle, $cmd);
                                 } else {
-                                    $message = "Master {$this->processTitle} process {$this->ppid} stop failure.";
+                                    $message = sprintf('Master %s process %s stop failure.', $this->processTitle, $this->ppid);
                                 }
 
                                 exit($message . PHP_EOL);
@@ -421,14 +421,12 @@ class Server
     {
         if (PHP_MAJOR_VERSION < 7) {
             // Must PHP7.
-            throw new Exception("PHP major version must >= 7" . PHP_EOL);
+            throw new Exception('PHP major version must >= 7');
         }
 
         if (! function_exists('socket_import_stream')) {
             // Must socket extension.
-            throw new Exception(
-                "Socket extension must be enabled at compile time by giving the '--enable-sockets' option to 'configure'" . PHP_EOL
-            );
+            throw new Exception('Socket extension must be enabled at compile time by giving the "--enable-sockets" option to "configure"');
         }
     }
 
@@ -458,7 +456,7 @@ class Server
         }
 
         if (self::isMasterAlive()) {
-            throw new Exception("Already running, master pid {$this->ppid}, start file ({$this->serverInfo['start_file']})");
+            throw new Exception(sprintf('Already running, master pid %s, start file (%s)', $this->ppid, $this->serverInfo['start_file']));
         } else {
             $this->ppid = posix_getpid();
             $this->pids[$this->ppid] = [];
@@ -551,7 +549,7 @@ class Server
             $flags   = ($this->protocol === 'udp') ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
             $this->socketStream  = stream_socket_server($this->localSocket, $errno, $errstr, $flags, $context);
             if (! $this->socketStream) {
-                throw new Exception("Create socket server fail, errno: {$errno}, errstr: {$errstr}");
+                throw new Exception('Create socket server fail, errno: %s, errstr: %s', $errno, $errstr);
             }
 
             // More socket option, must install sockets extension.
@@ -632,7 +630,7 @@ class Server
                 break;
             case 0:
                 // Child process, do business, can exit at last.
-                cli_set_process_title("{$this->processTitle} child process");
+                cli_set_process_title(sprintf('%s child process', $this->processTitle));
 
                 self::installChildSignal();
 
@@ -750,7 +748,7 @@ class Server
     protected function quitChild(string $command_type): bool
     {
         if (! self::isMasterAlive()) {
-            throw new Exception("Server {$this->processTitle} not running.");
+            throw new Exception(sprintf('Server %s not running.', $this->processTitle));
         }
 
         // TODO: Another goodness way
@@ -769,7 +767,7 @@ class Server
                                 // Normal quit.
                                 $child_stop_status = posix_kill($pid, SIGTERM);
                                 if (! $child_stop_status) {
-                                    throw new Exception("Child {$this->processTitle} process {$pid} stop failure.");
+                                    throw new Exception(sprintf('Child %s process %s stop failure.', $this->processTitle, $pid));
                                 }
 
                                 break;
@@ -779,7 +777,7 @@ class Server
                                 // SIGKILL cant be catch, so process will not restart.
                                 $child_stop_status = posix_kill($pid, SIGKILL);
                                 if (! $child_stop_status) {
-                                    throw new Exception("Child {$this->processTitle} process {$pid} stop failure.");
+                                    throw new Exception(sprintf('Child %s process %s stop failure.', $this->processTitle, $pid));
                                 }
 
                                 break;
@@ -810,20 +808,18 @@ class Server
             SIGKILL => 'SIGKILL',
         ];
 
-        $message = "Process[{$pid}] quit, ";
+        $message = sprintf('Process[%s] quit, ', $pid);
 
         if (pcntl_wifexited($status)) {
-            $message .= "Normal exited with status " . pcntl_wexitstatus($status);
+            $message .= sprintf('Normal exited with status %s', pcntl_wexitstatus($status));
         }
 
         if (pcntl_wifsignaled($status)) {
-            $message .= "by signal " .
-                ($this->signals[ pcntl_wtermsig($status) ] ?? ($other_debug_signals[pcntl_wtermsig($status)] ?? 'Unknow')) . "(" . pcntl_wtermsig($status) . ")";
+            $message .= sprintf('by signal %s (%s)', ($this->signals[ pcntl_wtermsig($status) ] ?? ($other_debug_signals[pcntl_wtermsig($status)] ?? 'Unknow')), pcntl_wtermsig($status));
         }
 
         if (pcntl_wifstopped($status)) {
-            $message .= "by signal (" .
-                pcntl_wstopsig($status) . ")";
+            $message .= sprintf('by signal (%s)', pcntl_wstopsig($status));
         }
 
         echo $message . PHP_EOL;
