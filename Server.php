@@ -354,14 +354,15 @@ class Server
                 ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (support: dev, prod)', 'dev')
                 ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {
-                        $output->writeln("In production mode, daemon [<info>on</info>].");
                         $this->daemon = true;
-                    } else {
-                        $output->writeln("In development mode, daemon [<comment>off</comment>].");
                     }
 
                     switch ($cmd) {
                         case 'start':
+
+                            if ($this->daemon){
+                                self::daemonize();
+                            }
 
                             // Default.
                             self::initializeMaster();
@@ -369,9 +370,11 @@ class Server
                             self::forks();
 
                             if ($this->daemon) {
-                                $output->writeln(sprintf('Start success, input `php %s stop` to quit.', $argv[0]));
+                                $output->writeln("In production mode, daemon [<info>on</info>].");
+                                $output->writeln(sprintf('Start success, input <info>php %s stop</info> to quit.', $argv[0]));
                             } else {
-                                $output->writeln('Start success, press `Ctrl + c` to quit.');
+                                $output->writeln("In development mode, daemon [<comment>off</comment>].");
+                                $output->writeln('Start success, press <info>Ctrl + c</info> to quit.');
                             }
 
                             self::monitor();
@@ -577,6 +580,50 @@ class Server
     }
 
     /**
+     * Daemonize the current process.
+     *
+     * @see APUE 13.3 part
+     */
+    protected function daemonize(): void
+    {
+        umask(0);
+
+        $pid = pcntl_fork();
+
+        switch ($pid) {
+            case -1:
+                throw new Exception('Fork failed');
+                break;
+            case 0:
+                // Child
+
+                // setsid: Make the current process a session leader to lose controlling TTY.
+                if (-1 === ($sid = posix_setsid())) {
+                    throw new Exception('Setsid error');
+                }
+
+                // Change current working directory to the root
+                // so we won't prevent file systems from being unmounted.
+                if (false === chdir('/')) {
+                    throw new Exception(sprintf('Change working directory to "%s" failed', '/'));
+                }
+
+                fclose(STDIN);
+                fclose(STDOUT);
+                fclose(STDERR);
+
+                fopen('/dev/null', 'rw');
+
+                break;
+            default:
+                // Master
+
+                // Let shell think it execute finished.
+                exit(0);
+        }
+    }
+
+    /**
      * Monitor any child process that terminated.
      *
      * If child exited or terminated, fork one.
@@ -624,7 +671,7 @@ class Server
     {
         $pid = pcntl_fork();
 
-        switch($pid) {
+        switch ($pid) {
             case -1:
                 throw new Exception('Fork failed.');
                 break;
@@ -753,11 +800,12 @@ class Server
 
         // TODO: Another goodness way
         // Find child process and quit.
-        $cmd = "ps a | grep -v color | grep -v vim | grep {$this->processTitle} | awk '{print $1}'";
+        $cmd = "ps ax | grep -v color | grep -v vim | grep {$this->processTitle} | awk '{print $1}'";
         exec($cmd, $output, $return_var);
         if ($return_var === 0) {
             if ($output && is_array($output)) {
                 foreach ($output as $pid) {
+
                     // Gid equals to master pid is valid.
                     if ( ($pid != $this->ppid) && (posix_getpgid($pid) == $this->ppid) ) {
 

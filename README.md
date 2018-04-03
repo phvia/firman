@@ -167,7 +167,6 @@ Our position is focus on socket :
 
 Implement protocol parse built-in.  
 Support Unix domain, UDP.  
-Daemonize.
 Robustness.  
 
 ## License
