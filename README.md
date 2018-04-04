@@ -138,12 +138,12 @@ $server
     ->run();
 ```
 
-## Server work flow explain
+## Server workflow explain
 
 * Check environment.  
 * Parse command.  
 * Initialize master process information.  
-* Create socket server.  
+* Create socket server (like: bind, listen, set option).  
 * Fork child process, install signal for child, poll on child.  
 * Block on master, monitor any child process exited to reload it.  
 

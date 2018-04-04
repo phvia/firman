@@ -753,20 +753,24 @@ class Server
             $write = $this->write;
             $except = $this->except;
 
-            // I/O multiplexing.
+            // Synchronous I/O multiplexing: select / poll / epoll.
+            // Waits for one of a set of file descriptors to become ready to perform I/O.
             // Warning raised if select system call is interrupted by an incoming signal,
-            // timeout will be zero and FALSE on error.
-            $value = @stream_select($read, $write, $except, $this->selectTimeout);
+            //  timeout on zero, FALSE on error.
+            // `main 2 select` for more information if needed.
+            $number = @stream_select($read, $write, $except, $this->selectTimeout);
 
-            if ($value > 0) {
+            if ($number > 0) {
 
                 foreach ($this->read as $socketStream) {
 
-                    // TODO: Timout set to zero or not.
-                    // Client number greater than process count will cause status pending, so just connect cant do anything!
                     // Heartbeat mechanism, need timer.
-                    // Remote address is user ip:port.
-                    if (false !== ($connection = @stream_socket_accept($socketStream, 0, $remote_address))) {
+                    // $remote_address is set to user ip:port.
+                    // If no pending connections: blocking I/O socket - accept() blocks the caller until a connection is present.
+                    //                         nonblocking I/O socket - accept() fails with the error EAGAIN or EWOULDBLOCK.
+                    // In order to be notified of incoming connections on a socket, we use select(2) or poll(2) before.
+                    // `main 2 accept` for more information if needed.
+                    if (false !== ($connection = @stream_socket_accept($socketStream, $this->acceptTimeout, $remote_address))) {
 
                         // Connect success, callback trigger.
                         call_user_func($this->onConnection, $connection);
@@ -775,7 +779,7 @@ class Server
                         call_user_func_array($this->onMessage, [$connection]);
                     }
                 }
-            } elseif ($value === 0 || $value === false) {
+            } elseif ($number === 0 || $number === false) {
                 // Timeout or Error
                 continue;
             } else {

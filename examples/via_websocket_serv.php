@@ -36,10 +36,10 @@ $server
     //
     // option, when client connected with server, callback trigger.
     ->onConnection(function($connection) {
-        echo "Server: New client connected." . PHP_EOL;
+        //echo "Server: New client connected." . PHP_EOL;
     })
     // option, when client send message to server, callback trigger.
-    ->onMessage(function($connection) use (&$has_hand_shake) {
+    ->onMessage(function($connection) use ($has_hand_shake) {
 
 //        $connection->recv();
 //        $connection->send();
@@ -49,7 +49,7 @@ $server
             'Server' => 'Via custom',
         ];
 
-        while (true) {
+//        while (true) {
 
             // Parse Http Header and Hand Shake.
             if (! $has_hand_shake) {
@@ -84,9 +84,9 @@ $server
 //            Cache-Control: no-cache
 //            Upgrade: websocket
 
-                echo "=======================begin====================\n";
-                print_r($buffer);
-                echo "=======================end======================\n";
+//                echo "=======================begin====================\n";
+//                print_r($buffer);
+//                echo "=======================end======================\n";
 
                 // Http protocol: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Overview
                 // Http request format check.
@@ -166,7 +166,7 @@ $server
                 $response_header .= "\r\n";
 
                 if (false !== fwrite($connection, $response_header, strlen($response_header))) {
-                    echo "Hand Shake Success\n";
+//                    echo "Hand Shake Success\n";
                     $has_hand_shake = true;
                 }
             }
@@ -196,7 +196,7 @@ $server
                 for ($index = 0; $index < strlen($data); $index++) {
                     $decoded .= $data[$index] ^ $masks[$index % 4];
                 }
-                echo "Recv from client: {$decoded}\n";
+//                echo "Recv from client: {$decoded}\n";
             }
 
             // Write into socket.
@@ -233,9 +233,11 @@ $server
             $length = @fwrite($connection, $ns, 8192);
 
             if ((false !== $length) && ($length === strlen($ns))) {
-                echo "Server: write to client success" . PHP_EOL;
+//                echo "Server: write to client success" . PHP_EOL;
             }
-        }
+//        }
+
+        // TODO： Why connection closed by itself.
     })
 
     // Run server.
