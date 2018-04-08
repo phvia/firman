@@ -366,7 +366,18 @@ class Server
 
                             // Default.
                             self::initializeMaster();
-                            self::createServer();
+
+                            // Bind and Listen.
+                            // If no reuseport, bind and listen here, this will cause thundering herd problem, process not available still be waked up.
+                            //      select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
+                            //      select(7, [6], [6], [], {5, 0})         = 1 (in [6], left {2, 22060})
+                            //    * poll([{fd=6, events=POLLIN|POLLERR|POLLHUP}], 1, 10000) = 1 ([{fd=6, revents=POLLIN}])
+                            //    * accept(6, 0x7ffe34ffe390, 0x7ffe34ffe380) = -1 EAGAIN (Resource temporarily unavailable)
+                            //    * poll([{fd=6, events=POLLIN|POLLERR|POLLHUP}], 1, 10000) = 0 (Timeout)
+                            //      select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
+                            // So bind and listen in child when reuseport.
+                            // self::createServer();
+
                             self::forks();
 
                             if ($this->daemon) {
@@ -514,7 +525,7 @@ class Server
      * Create socket server.
      *
      * Master create socket and listen, later on descriptor can be used in child.
-     * If reuse port, child can create server by itself.
+     * If reuse port, child can create server by itself, it can resolve thundering herd.
      *
      * Important functions:
      * stream_context_create => stream_socket_server => socket_import_stream => socket_set_option => stream_set_blocking
@@ -560,9 +571,14 @@ class Server
 
             if ($socket !== false && $socket !== null) {
                 // Predefined constants: http://php.net/manual/en/sockets.constants.php
-                // Level number see: http://php.net/manual/en/function.getprotobyname.php; Or `php -r "print_r(getprotobyname('tcp'));"`
+                // Level number see: http://php.net/manual/en/function.getprotobyname.php; Or `php -r "print_r(getprotobyname('tcp'));"`, SOL_TCP==6
                 // Option name see: http://php.net/manual/en/function.socket-get-option.php
+                //                  http://php.net/manual/en/function.socket-set-option.php
+
+                // Connections are kept active with periodic transmission of messages,
+                // If the connected socket fails to respond to these messages, the connection is broken and processes writing to that socket are notified with a SIGPIPE signal.
                 socket_set_option($socket, SOL_SOCKET, SO_KEEPALIVE, 1);
+                // Nagle TCP algorithm is disabled.
                 socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
             }
 
@@ -678,6 +694,8 @@ class Server
             case 0:
                 // Child process, do business, can exit at last.
                 cli_set_process_title(sprintf('%s child process', $this->processTitle));
+
+                self::createServer();
 
                 self::installChildSignal();
 

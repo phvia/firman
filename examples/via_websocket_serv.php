@@ -228,6 +228,7 @@ $server
             //            sendto(7, "\201\0362018-03-28 18:43:56+1973752716", 32, 0, NULL, 0) = 32
             //            write(1, "Server: write to client success\n", 32) = 32
             //            recvfrom(7, "", 8192, 0, NULL, NULL)    = 0
+            // SO_KEEPALIVE affect SIGPIPE signal.
 
             // Other: Write twice to a closed socket also cause SIGPIPE.
             $length = @fwrite($connection, $ns, 8192);
