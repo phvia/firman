@@ -111,7 +111,7 @@ $server
     // Set socket backlog number
     ->setBacklog(100)
     
-    // optional, default is 30
+    // optional, default is 200
     // Set select system call timeout value
     ->setSelectTimeout(5)
     
@@ -142,32 +142,35 @@ $server
 
 * Check environment.  
 * Parse command.  
-* Initialize master process information.  
-* Create socket server (like: bind, listen, set option).  
+* Initialize master process information.    
 * Fork child process, install signal for child, poll on child.  
-* Block on master, monitor any child process exited to reload it.  
+* Create socket server (like: create socket, bind, listen, set option).  
+* Block on master, monitor any child process and restart who exited.  
 
 ## Tests
 ```shell
 $ ./vendor/bin/phpunit --bootstrap=vendor/autoload.php tests
 ```
 
-## Contribute:  
-Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
-
-## Other resource:  
-Composer document: https://getcomposer.org/doc/  
-Symfony Console Component: http://symfony.com/doc/current/components/console.html
-
-## Group
-QQ group: 377154148
-
 ## Todo
 Our position is focus on socket :  
 
-Implement protocol parse built-in.  
-Support Unix domain, UDP.  
-Robustness.  
+* Implement protocol parse built-in.  
+* Support Unix domain, UDP, ect.  
+* Robustness.
+
+## Resources:  
+Composer Document: https://getcomposer.org/doc/  
+
+Symfony Console Component: http://symfony.com/doc/current/components/console.html
+
+## Contribute:  
+Any pull requests to improve **via** are welcome.  
+
+Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
+
+## Group
+QQ group: 377154148
 
 ## License
 [MIT](https://github.com/phpvia/via/blob/master/LICENSE)

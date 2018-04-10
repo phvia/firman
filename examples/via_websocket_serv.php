@@ -27,7 +27,7 @@ $server
     ->setPpidPath('/tmp')
     // option, default is 100
     ->setBacklog(100)
-    // option, default is 30
+    // option, default is 200
     ->setSelectTimeout(5)
     // option, default is 60
     ->setAcceptTimeout(10)

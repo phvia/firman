@@ -86,7 +86,7 @@ class Server
      *
      * @var float $selectTimeout
      */
-    protected $selectTimeout = 30;
+    protected $selectTimeout = 200;
 
     /**
      * Socket accept timeout (seconds).
@@ -367,7 +367,7 @@ class Server
                             // Default.
                             self::initializeMaster();
 
-                            // Bind and Listen.
+                            // Create socket, Bind and Listen.
                             // If no reuseport, bind and listen here, this will cause thundering herd problem, process not available still be waked up.
                             //      select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
                             //      select(7, [6], [6], [], {5, 0})         = 1 (in [6], left {2, 22060})
@@ -529,6 +529,7 @@ class Server
      *
      * Important functions:
      * stream_context_create => stream_socket_server => socket_import_stream => socket_set_option => stream_set_blocking
+     * stream_socket_server equals to execute create, bind, listen in order.
      *
      * @throws Exception
      */
@@ -546,11 +547,13 @@ class Server
             // Options see http://php.net/manual/en/context.socket.php
             // Available socket options see http://php.net/manual/en/function.socket-get-option.php
             // `Stream` extension instead of `Socket` extension in order to support fread/fwrite on connection.
+            // `man 7 socket` seek more information if needed.
             $options = [
                 'socket' => [
                     'bindto'        => $this->address . ':' . $this->port,
                     'backlog'       => $this->backlog,
                     // Each child listen in same port to avoid thundering herd.
+                    // Improve load distribution compare to traditional.
                     'so_reuseport'  => true,
                 ],
             ];
@@ -582,8 +585,8 @@ class Server
                 socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
             }
 
-            // Switch to non-blocking mode,
-            // affacts calls like fgets and fread that read from the stream.
+            // Switch to non-blocking mode, affacts calls like fgets and fread that read from the stream.
+            // To ensure that accept() never blocks.
             if (! stream_set_blocking($this->socketStream, false)) {
                 throw new Exception('Switch to non-blocking mode fail');
             }
@@ -775,19 +778,20 @@ class Server
             // Waits for one of a set of file descriptors to become ready to perform I/O.
             // Warning raised if select system call is interrupted by an incoming signal,
             //  timeout on zero, FALSE on error.
-            // `main 2 select` for more information if needed.
+            // `man 2 select` seek more information if needed.
             $number = @stream_select($read, $write, $except, $this->selectTimeout);
 
             if ($number > 0) {
 
                 foreach ($this->read as $socketStream) {
 
-                    // Heartbeat mechanism, need timer.
-                    // $remote_address is set to user ip:port.
+                    // TODO Heartbeat mechanism need timer.
+
                     // If no pending connections: blocking I/O socket - accept() blocks the caller until a connection is present.
                     //                         nonblocking I/O socket - accept() fails with the error EAGAIN or EWOULDBLOCK.
-                    // In order to be notified of incoming connections on a socket, we use select(2) or poll(2) before.
-                    // `main 2 accept` for more information if needed.
+                    // In order to be notified of incoming connections on a socket, we can use select(2) or poll(2).
+                    // Remote_address is set to user ip:port.
+                    // `man 2 accept` seek more information if needed.
                     if (false !== ($connection = @stream_socket_accept($socketStream, $this->acceptTimeout, $remote_address))) {
 
                         // Connect success, callback trigger.
