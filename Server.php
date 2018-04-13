@@ -267,7 +267,7 @@ class Server
      */
     public function setBacklog(int $backlog)
     {
-        $this->backlog = $backlog;
+        if ($backlog > 0) $this->backlog = $backlog;
 
         return $this;
     }
@@ -281,7 +281,7 @@ class Server
      */
     public function setSelectTimeout(int $selectTimeout)
     {
-        $this->selectTimeout = $selectTimeout;
+        if ($selectTimeout >= 0) $this->selectTimeout = $selectTimeout;
 
         return $this;
     }
@@ -295,7 +295,7 @@ class Server
      */
     public function setAcceptTimeout(int $acceptTimeout)
     {
-        $this->acceptTimeout = $acceptTimeout;
+        if ($acceptTimeout >= 0) $this->acceptTimeout = $acceptTimeout;
 
         return $this;
     }
@@ -478,7 +478,7 @@ class Server
                 touch($this->serverInfo['pid_file']);
             }
             file_put_contents($this->serverInfo['pid_file'], $this->ppid, LOCK_EX);
-            cli_set_process_title("{$this->processTitle} master process, start file ({$this->serverInfo['start_file']})");
+            cli_set_process_title(sprintf('%s master process, start file (%s)', $this->processTitle, $this->serverInfo['start_file']));
 
             // Install signal for master.
             $pid_file = $this->serverInfo['pid_file'];
@@ -654,11 +654,13 @@ class Server
         // Block on master, use WNOHANG in loop will waste too much CPU.
         while ($terminated_pid = pcntl_waitpid(-1, $status, 0)) {
 
+            unset($this->pids[$this->ppid][$terminated_pid]);
+
             if (! $this->daemon) {
                 self::debugSignal($terminated_pid, $status);
             }
 
-            unset($this->pids[$this->ppid][$terminated_pid]);
+            // TODO Do statistics here.
 
             // Fork again condition: normal exited or killed by SIGTERM.
             // if ( pcntl_wifexited($status) || (pcntl_wifsignaled($status) && in_array(pcntl_wtermsig($status), [SIGTERM])) ) {
@@ -838,7 +840,7 @@ class Server
                         switch ($command_type) {
                             case 'restart':
 
-                                // Normal quit.
+                                // Normal quit to auto restart by monitor.
                                 $child_stop_status = posix_kill($pid, SIGTERM);
                                 if (! $child_stop_status) {
                                     throw new Exception(sprintf('Child %s process %s stop failure.', $this->processTitle, $pid));
