@@ -796,6 +796,9 @@ class Server
                     // `man 2 accept` seek more information if needed.
                     if (false !== ($connection = @stream_socket_accept($socketStream, $this->acceptTimeout, $remote_address))) {
 
+                        // Avoid to close.
+//                        stream_set_blocking($connection, 0);
+
                         // Connect success, callback trigger.
                         call_user_func($this->onConnection, $connection);
 

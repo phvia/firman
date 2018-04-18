@@ -12,14 +12,12 @@ PHP multi-process and non-blocking I/O library.
 $ composer require phpvia/via
 ```
 
-## Run example  
-```shell
-# Show usage
+## Run example
 
+* Show usage  
+```shell
 $ php /path/to/via/examples/via_websocket_serv.php
-```
 
-```shell
 Via package 0.0.1
 
 Usage:
@@ -42,13 +40,10 @@ Available commands:
   stop     Stop Via server
 ```
 
+* Show usage detail
 ```shell
-# Show usage detail
-
 $ php /path/to/via/examples/via_websocket_serv.php start -h
-```
 
-```shell
 Usage:
   start [options]
 
@@ -66,24 +61,29 @@ Help:
   Start Via server
 ```
 
+* Process control
 ```shell
-# Process control
-
 $ php /path/to/via/xxx.php start
 $ php /path/to/via/xxx.php restart
 $ php /path/to/via/xxx.php stop
 ```
 
-## Do it yourself
-```php
-# Simplest configure
+* Run in daemon
+```shell
+$ php /path/to/via/xxx.php start --env=prod
+# OR
+$ php /path/to/via/xxx.php start --eprod
+```
 
+## Do it yourself
+
+* Simplest configure
+```php
 (new \Via\Server('tcp://0.0.0.0:8080'))->run();
 ```
 
+* All configure
 ```php
-# All configure
-
 $socket = 'tcp://0.0.0.0:8080';
 
 $server = new \Via\Server();
