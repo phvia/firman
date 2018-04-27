@@ -28,7 +28,7 @@ $server
     // option, default is 100
     ->setBacklog(100)
     // option, default is 200
-    ->setSelectTimeout(5)
+    ->setSelectTimeout(100)
     // option, default is 60
     ->setAcceptTimeout(0)
 
@@ -49,7 +49,7 @@ $server
             'Server' => 'Via custom',
         ];
 
-//        while (true) {
+        while (true) {
 
             // Parse Http Header and Hand Shake.
             if (! $has_hand_shake) {
@@ -196,7 +196,7 @@ $server
                 for ($index = 0; $index < strlen($data); $index++) {
                     $decoded .= $data[$index] ^ $masks[$index % 4];
                 }
-//                echo "Recv from client: {$decoded}\n";
+                echo "Recv from client: {$decoded}\n";
             }
 
             // Write into socket.
@@ -218,7 +218,7 @@ $server
             // errno=32 Broken pipe: http://www.php.net/manual/fr/function.fwrite.php#96951
             // sleep 1 before fwrite.
 
-            sleep(1);
+            sleep(5);
 
             // TODO: If client browser close or refresh, child will block on recvfrom, later will cause SIGPIPE problem, may close this client connection.
             // TODO: the SIGPIPE signal default action is kill current process. so Via reload a new one.
@@ -236,7 +236,7 @@ $server
             if ((false !== $length) && ($length === strlen($ns))) {
 //                echo "Server: write to client success" . PHP_EOL;
             }
-//        }
+        }
 
         // TODO： Why connection closed by itself.
     })

@@ -16,7 +16,7 @@ $ composer require phpvia/via
 
 * Show usage  
 ```shell
-$ php /path/to/via/examples/via_websocket_serv.php
+$ php /path/to/via/examples/via_websocket_serv_builtin.php
 
 Via package 0.0.1
 
@@ -42,7 +42,7 @@ Available commands:
 
 * Show usage detail
 ```shell
-$ php /path/to/via/examples/via_websocket_serv.php start -h
+$ php /path/to/via/examples/via_websocket_serv_builtin.php start -h
 
 Usage:
   start [options]
@@ -63,9 +63,14 @@ Help:
 
 * Process control
 ```shell
-$ php /path/to/via/xxx.php start
-$ php /path/to/via/xxx.php restart
-$ php /path/to/via/xxx.php stop
+# After start server, you can access examples/ws.html in web browser
+$ php examples/via_websocket_serv_builtin.php start
+
+# Restart Via server
+$ php examples/via_websocket_serv_builtin.php restart
+
+# Stop Via server
+$ php examples/via_websocket_serv_builtin.php stop
 ```
 
 * Run in daemon

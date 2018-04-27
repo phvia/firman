@@ -9,6 +9,8 @@
 namespace Via;
 
 use Exception;
+use Via\Connection;
+use Via\Protocol\WebSocket;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -208,7 +210,7 @@ class Server
         if ((int)$count > 0) {
             $this->count = $count;
         } else {
-            throw new Exception('Error: Illegal child process number.' . PHP_EOL);
+            throw new Exception('Error: Illegal child process number.');
         }
 
         return $this;
@@ -273,7 +275,7 @@ class Server
     }
 
     /**
-     * Set select timeout value.
+     * Set select timeout value (seconds).
      *
      * @param int $selectTimeout
      *
@@ -287,7 +289,7 @@ class Server
     }
 
     /**
-     * Set accept timeout value.
+     * Set accept timeout value (seconds).
      *
      * @param int $acceptTimeout
      *
@@ -347,11 +349,11 @@ class Server
         self::strict();
 
         // Combine with symfony console.
-        $app = new Application('Via package', self::VERSION);
+        $app = new Application("PHP multi-process and non-blocking I/O library.\nVia package", self::VERSION);
         foreach ($this->commands as $cmd) {
             $app->register($cmd)
                 ->setDescription(ucfirst("{$cmd} Via server"))
-                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (support: dev, prod)', 'dev')
+                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (dev or prod)', 'dev')
                 ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {
                         $this->daemon = true;
@@ -566,7 +568,7 @@ class Server
             $flags   = ($this->protocol === 'udp') ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
             $this->socketStream  = stream_socket_server($this->localSocket, $errno, $errstr, $flags, $context);
             if (! $this->socketStream) {
-                throw new Exception('Create socket server fail, errno: %s, errstr: %s', $errno, $errstr);
+                throw new Exception(sprintf('Create socket server fail, errno: %s, errstr: %s', $errno, $errstr));
             }
 
             // More socket option, must install sockets extension.
@@ -785,7 +787,7 @@ class Server
 
             if ($number > 0) {
 
-                foreach ($this->read as $socketStream) {
+                foreach ($read as $socket_stream) {
 
                     // TODO Heartbeat mechanism need timer.
 
@@ -794,16 +796,23 @@ class Server
                     // In order to be notified of incoming connections on a socket, we can use select(2) or poll(2).
                     // Remote_address is set to user ip:port.
                     // `man 2 accept` seek more information if needed.
-                    if (false !== ($connection = @stream_socket_accept($socketStream, $this->acceptTimeout, $remote_address))) {
+                    if (false !== ($socket_connection = @stream_socket_accept($socket_stream, $this->acceptTimeout, $remote_address))) {
 
-                        // Avoid to close.
-//                        stream_set_blocking($connection, 0);
+                        // Set read operations unbuffered.
+                        stream_set_read_buffer($socket_stream, 0);
 
                         // Connect success, callback trigger.
-                        call_user_func($this->onConnection, $connection);
+                        call_user_func($this->onConnection);
 
-                        // Loop prevent read once in callback.
-                        call_user_func_array($this->onMessage, [$connection]);
+                        // Do handshake, auto judge if handshake yet.
+                        if (WebSocket::doHandshake($socket_connection)) {
+                            while (true) {
+                                $decoded_string = WebSocket::decode($socket_connection);
+                                if ($decoded_string) {
+                                    call_user_func_array($this->onMessage, [new Connection($socket_connection), $decoded_string]);
+                                }
+                            }
+                        }
                     }
                 }
             } elseif ($number === 0 || $number === false) {
