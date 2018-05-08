@@ -6,8 +6,6 @@
  * @author farwish <farwish@foxmail.com>
  */
 
-use Via\Protocol\WebSocket;
-
 include __DIR__ . '/../../../autoload.php';
 
 $socket = 'tcp://0.0.0.0:8080';

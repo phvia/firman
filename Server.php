@@ -342,7 +342,7 @@ class Server
      *
      * @throws Exception
      */
-    public function run(): void
+    public function run()
     {
         global $argv;
 
@@ -433,7 +433,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function strict(): void
+    protected function strict()
     {
         if (PHP_MAJOR_VERSION < 7) {
             // Must PHP7.
@@ -461,7 +461,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function initializeMaster(): void
+    protected function initializeMaster()
     {
         if (PHP_MINOR_VERSION >= 1) {
             // Low overhead.
@@ -535,7 +535,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function createServer(): void
+    protected function createServer()
     {
         if ($this->localSocket) {
             // Parse socket name.
@@ -605,7 +605,7 @@ class Server
      *
      * @see APUE 13.3 part
      */
-    protected function daemonize(): void
+    protected function daemonize()
     {
         umask(0);
 
@@ -651,7 +651,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function monitor(): void
+    protected function monitor()
     {
         // Block on master, use WNOHANG in loop will waste too much CPU.
         while ($terminated_pid = pcntl_waitpid(-1, $status, 0)) {
@@ -678,7 +678,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function forks(): void
+    protected function forks()
     {
         while ( empty($this->pids) || count($this->pids[$this->ppid]) < ($this->count) ) {
             self::fork();
@@ -690,7 +690,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function fork(): void
+    protected function fork()
     {
         $pid = pcntl_fork();
 
@@ -727,7 +727,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function installChildSignal(): void
+    protected function installChildSignal()
     {
         $return_value = true;
         foreach ($this->signals as $signo => $name) {
@@ -765,7 +765,7 @@ class Server
      * Important functions:
      *  stream_select => stream_socket_accept
      */
-    protected function poll(): void
+    protected function poll()
     {
         // Store child socket stream.
         $this->read[]  = $this->socketStream;
@@ -890,7 +890,7 @@ class Server
      * @param $pid
      * @param $status
      */
-    protected function debugSignal($pid, $status): void
+    protected function debugSignal($pid, $status)
     {
         $other_debug_signals = [
             SIGKILL => 'SIGKILL',

@@ -48,7 +48,7 @@ class WebSocket
      *
      * @return bool handshake true on success or false on failure
      */
-    public static function doHandshake($socket_connection)
+    public static function doHandshake($socket_connection): bool
     {
         if (! is_resource($socket_connection) || (! $request_headers = static::parseHttpHeader($socket_connection)) ) {
             return false;
@@ -82,7 +82,7 @@ class WebSocket
      *
      * @param Resource $socket_connection
      *
-     * @return null|string
+     * @return string
      */
     public static function decode($socket_connection): string
     {
@@ -151,9 +151,7 @@ class WebSocket
      *
      * @param Resource $socket_connection
      *
-     * @return array request headers
-     *
-     * @throws Exception
+     * @return array Request headers
      */
     protected static function parseHttpHeader($socket_connection): array
     {
