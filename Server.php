@@ -387,7 +387,7 @@ class Server
                                 $output->writeln(sprintf('Start success, input <info>php %s stop</info> to quit.', $argv[0]));
                             } else {
                                 $output->writeln("In development mode, daemon [<comment>off</comment>].");
-                                $output->writeln('Start success, press <info>Ctrl + c</info> to quit.');
+                                $output->writeln('Start success, press <info>Ctrl + C</info> to quit.');
                             }
 
                             self::monitor();

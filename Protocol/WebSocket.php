@@ -95,27 +95,49 @@ class WebSocket
         if ($buffer = fread($socket_connection, 8192)) {
             static::$read_buffer = $buffer;
 
-            $len = $masks = $data = $decoded_data = null;
+            // 第一个字节(8bit)
+            $first_byte = substr($buffer, 0, 1);
+            // echo bin2hex($first_byte) . PHP_EOL;
+            // (16进制)81 => (二进制)1000 0001
+            // 0001 即 (opcode)0x1 ，表示一个文本帧
 
-            $len = ord($buffer[1]) & 127;
+            // 第二个字节(8bit)
+            $second_byte = substr($buffer, 1, 1);
+            $second_hex = bin2hex($second_byte);
+            // echo $hex . PHP_EOL;
+            // (十六进制)b7  =>  (二进制)1011 0111   同上: b等于十进制11, 11利用8-4-2-1方法转二进制为1011
+            // 1开头表示已设置掩码mask（也就是大于十六进制 0x80 时）， 剩下的 0011 0111 转十进制，得到 payload len. (1011 0111 - 1000 0000)
 
-            if ($len === 126) {
-                $masks = substr($buffer, 4, 4);
-                $data = substr($buffer, 8);
+            // 实际计算 payload len 用十进制 hexdec('0xb7') - hexdec('0x80')
+            $payload_len = (hexdec($second_hex) - hexdec('0x80'));
 
-            } else if ($len === 127) {
-                $masks = substr($buffer, 10, 4);
-                $data = substr($buffer, 14);
-            } else {
-                $masks = substr($buffer, 2, 4);
-                $data = substr($buffer, 6);
-            }
+            // 0x80 = 128, 第二个字节大于 128，就证明设置了掩码
+//            if (hexdec($hex) <= 128) {
+//                return ''; // 未设置掩码时退出
+//            }
+            $masking_key = '';
 
-            for ($index = 0; $index < strlen($data); $index++) {
-                $decoded_string .= $data[$index] ^ $masks[$index % 4];
+            // masking-key为4字节，从哪里开始是由 Payload len 的长度决定后面需要多少的 Extended payload len 占位
+            if ($payload_len < 126) {
+                $masking_key = substr($buffer, 2, 4);
+                $payload = substr($buffer, 6);
+            } elseif ($payload_len == 126 ) {
+                $masking_key = substr($buffer, 4, 4);
+                $payload = substr($buffer, 8);
+            } elseif ($payload_len == 127) {
+                $masking_key = substr($buffer, 10, 4);
+                $payload = substr($buffer, 14);
+            } else {}
+
+            $data_length = strlen($payload);
+
+            // Convert to unmasked data: https://tools.ietf.org/html/rfc6455#section-5.3
+            for ($i = 0; $i < $data_length; $i++) {
+                $decoded_string .= $payload[$i] ^ $masking_key[$i % 4];
             }
         }
 
+        // Buffer full cause unreadable code?
         return $decoded_string;
     }
 
