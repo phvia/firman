@@ -29,5 +29,10 @@
     },
     "suggest": {
         "php": "Suggest to install newest PHP for high performance."
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.0.x-dev"
+        }
     }
 }
