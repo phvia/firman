@@ -1,5 +1,5 @@
 {
-    "name": "phpvia/via",
+    "name": "phvia/via",
     "description": "PHP multi-process and non-blocking I/O library.",
     "type": "library",
     "license": "MIT",
