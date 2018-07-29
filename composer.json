@@ -17,6 +17,12 @@
     "require-dev": {
         "phpunit/phpunit": "~6.5.7"
     },
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
     "autoload": {
         "psr-4": {
             "Via\\": "./"
@@ -26,6 +32,12 @@
         "psr-4": {
             "Via\\Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "post-install-cmd": [
+        ],
+        "post-update-cmd": [
+        ]
     },
     "suggest": {
         "php": "Suggest to install newest PHP for high performance."

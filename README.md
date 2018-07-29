@@ -3,7 +3,7 @@
 PHP multi-process and non-blocking I/O library.
 
 ## Dependency
-* PHP>=7. (use many features and high performance)
+* PHP>=7. (for new features and high performance)
 * PCNTL extension. (compile PHP with `--enable-pcntl` option to enable)
 * Sockets extension. (compile PHP with `--enable-sockets` option to enable)
 
@@ -78,20 +78,26 @@ $ php examples/via_websocket_serv_builtin.php stop
 $ php /path/to/via/xxx.php start --env=prod
 # OR
 $ php /path/to/via/xxx.php start --eprod
+$
+$ ps auxf | grep Via
 ```
 
 ## Do it yourself
 
 * Simplest configure
 ```php
+include '/path/to/vendor/autoload.php';
+
 (new \Via\Server('tcp://0.0.0.0:8080'))->run();
 ```
 
-* All configure
+* Full configure
 ```php
-$socket = 'tcp://0.0.0.0:8080';
+inlcude '/path/to/vendor/autoload.php';
 
 $server = new \Via\Server();
+
+$socket = 'tcp://0.0.0.0:8080';
 
 $server
     // Parameter.
@@ -148,8 +154,8 @@ $server
 * Check environment.  
 * Parse command.  
 * Initialize master process information.    
-* Fork child process, install signal for child, poll on child.  
-* Create socket server (like: create socket, bind, listen, set option).  
+*   Fork child process, install signal for child, poll on child.  
+*   Create socket server (like: create socket, bind, listen, set option).  
 * Block on master, monitor any child process and restart who exited.  
 
 ## Tests
@@ -170,7 +176,7 @@ Composer Document: https://getcomposer.org/doc/
 Symfony Console Component: http://symfony.com/doc/current/components/console.html
 
 ## Contribute:  
-Any pull requests to improve **via** are welcome.  
+Any pull requests to improve **phvia/via** are welcome.  
 
 Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
 
