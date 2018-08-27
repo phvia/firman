@@ -8,7 +8,6 @@
 
     //
     // @doc https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
-    // @author farwish.com
     //
 
     try {
@@ -31,15 +30,14 @@
             }
             */
 
-            ws.send('Hello 好码');
-
+            ws.send('Hello, today is ' + Date());
         };
 
         ws.onmessage = function(event) {
             console.log("Receive from server: " + event.data);
 
             setInterval(function () {
-                ws.send('EiEi吧' + new Date());
+                ws.send(Date());
             }, 2000)
         };
 

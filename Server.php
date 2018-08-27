@@ -9,6 +9,8 @@
 namespace Via;
 
 use Exception;
+use Via\Connection;
+use Via\Protocol\WebSocket;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -208,7 +210,7 @@ class Server
         if ((int)$count > 0) {
             $this->count = $count;
         } else {
-            throw new Exception('Error: Illegal child process number.' . PHP_EOL);
+            throw new Exception('Error: Illegal child process number.');
         }
 
         return $this;
@@ -273,7 +275,7 @@ class Server
     }
 
     /**
-     * Set select timeout value.
+     * Set select timeout value (seconds).
      *
      * @param int $selectTimeout
      *
@@ -287,7 +289,7 @@ class Server
     }
 
     /**
-     * Set accept timeout value.
+     * Set accept timeout value (seconds).
      *
      * @param int $acceptTimeout
      *
@@ -340,18 +342,18 @@ class Server
      *
      * @throws Exception
      */
-    public function run(): void
+    public function run()
     {
         global $argv;
 
         self::strict();
 
         // Combine with symfony console.
-        $app = new Application('Via package', self::VERSION);
+        $app = new Application("PHP multi-process and non-blocking I/O library.\nVia package", self::VERSION);
         foreach ($this->commands as $cmd) {
             $app->register($cmd)
                 ->setDescription(ucfirst("{$cmd} Via server"))
-                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (support: dev, prod)', 'dev')
+                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (dev or prod)', 'dev')
                 ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {
                         $this->daemon = true;
@@ -385,7 +387,7 @@ class Server
                                 $output->writeln(sprintf('Start success, input <info>php %s stop</info> to quit.', $argv[0]));
                             } else {
                                 $output->writeln("In development mode, daemon [<comment>off</comment>].");
-                                $output->writeln('Start success, press <info>Ctrl + c</info> to quit.');
+                                $output->writeln('Start success, press <info>Ctrl + C</info> to quit.');
                             }
 
                             self::monitor();
@@ -431,7 +433,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function strict(): void
+    protected function strict()
     {
         if (PHP_MAJOR_VERSION < 7) {
             // Must PHP7.
@@ -459,7 +461,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function initializeMaster(): void
+    protected function initializeMaster()
     {
         if (PHP_MINOR_VERSION >= 1) {
             // Low overhead.
@@ -533,7 +535,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function createServer(): void
+    protected function createServer()
     {
         if ($this->localSocket) {
             // Parse socket name.
@@ -566,7 +568,7 @@ class Server
             $flags   = ($this->protocol === 'udp') ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
             $this->socketStream  = stream_socket_server($this->localSocket, $errno, $errstr, $flags, $context);
             if (! $this->socketStream) {
-                throw new Exception('Create socket server fail, errno: %s, errstr: %s', $errno, $errstr);
+                throw new Exception(sprintf('Create socket server fail, errno: %s, errstr: %s', $errno, $errstr));
             }
 
             // More socket option, must install sockets extension.
@@ -603,7 +605,7 @@ class Server
      *
      * @see APUE 13.3 part
      */
-    protected function daemonize(): void
+    protected function daemonize()
     {
         umask(0);
 
@@ -649,7 +651,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function monitor(): void
+    protected function monitor()
     {
         // Block on master, use WNOHANG in loop will waste too much CPU.
         while ($terminated_pid = pcntl_waitpid(-1, $status, 0)) {
@@ -676,7 +678,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function forks(): void
+    protected function forks()
     {
         while ( empty($this->pids) || count($this->pids[$this->ppid]) < ($this->count) ) {
             self::fork();
@@ -688,7 +690,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function fork(): void
+    protected function fork()
     {
         $pid = pcntl_fork();
 
@@ -725,7 +727,7 @@ class Server
      *
      * @throws Exception
      */
-    protected function installChildSignal(): void
+    protected function installChildSignal()
     {
         $return_value = true;
         foreach ($this->signals as $signo => $name) {
@@ -763,7 +765,7 @@ class Server
      * Important functions:
      *  stream_select => stream_socket_accept
      */
-    protected function poll(): void
+    protected function poll()
     {
         // Store child socket stream.
         $this->read[]  = $this->socketStream;
@@ -785,7 +787,7 @@ class Server
 
             if ($number > 0) {
 
-                foreach ($this->read as $socketStream) {
+                foreach ($read as $socket_stream) {
 
                     // TODO Heartbeat mechanism need timer.
 
@@ -794,13 +796,23 @@ class Server
                     // In order to be notified of incoming connections on a socket, we can use select(2) or poll(2).
                     // Remote_address is set to user ip:port.
                     // `man 2 accept` seek more information if needed.
-                    if (false !== ($connection = @stream_socket_accept($socketStream, $this->acceptTimeout, $remote_address))) {
+                    if (false !== ($socket_connection = @stream_socket_accept($socket_stream, $this->acceptTimeout, $remote_address))) {
+
+                        // Set read operations unbuffered.
+                        stream_set_read_buffer($socket_stream, 0);
 
                         // Connect success, callback trigger.
-                        call_user_func($this->onConnection, $connection);
+                        call_user_func($this->onConnection);
 
-                        // Loop prevent read once in callback.
-                        call_user_func_array($this->onMessage, [$connection]);
+                        // Do handshake, auto judge if handshake yet.
+                        if (WebSocket::doHandshake($socket_connection)) {
+                            while (true) {
+                                $decoded_string = WebSocket::decode($socket_connection);
+                                if ($decoded_string) {
+                                    call_user_func_array($this->onMessage, [new Connection($socket_connection), $decoded_string]);
+                                }
+                            }
+                        }
                     }
                 }
             } elseif ($number === 0 || $number === false) {
@@ -878,7 +890,7 @@ class Server
      * @param $pid
      * @param $status
      */
-    protected function debugSignal($pid, $status): void
+    protected function debugSignal($pid, $status)
     {
         $other_debug_signals = [
             SIGKILL => 'SIGKILL',

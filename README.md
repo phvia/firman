@@ -3,7 +3,7 @@
 PHP multi-process and non-blocking I/O library.
 
 ## Dependency
-* PHP>=7. (use many features and high performance)
+* PHP>=7. (for new features and high performance)
 * PCNTL extension. (compile PHP with `--enable-pcntl` option to enable)
 * Sockets extension. (compile PHP with `--enable-sockets` option to enable)
 
@@ -12,14 +12,12 @@ PHP multi-process and non-blocking I/O library.
 $ composer require phpvia/via
 ```
 
-## Run example  
-```shell
-# Show usage
+## Run example
 
-$ php /path/to/via/examples/via_websocket_serv.php
-```
-
+* Show usage  
 ```shell
+$ php /path/to/via/examples/via_websocket_serv_builtin.php
+
 Via package 0.0.1
 
 Usage:
@@ -42,13 +40,10 @@ Available commands:
   stop     Stop Via server
 ```
 
+* Show usage detail
 ```shell
-# Show usage detail
+$ php /path/to/via/examples/via_websocket_serv_builtin.php start -h
 
-$ php /path/to/via/examples/via_websocket_serv.php start -h
-```
-
-```shell
 Usage:
   start [options]
 
@@ -66,27 +61,43 @@ Help:
   Start Via server
 ```
 
+* Process control
 ```shell
-# Process control
+# After start server, you can access examples/ws.html in web browser
+$ php examples/via_websocket_serv_builtin.php start
 
-$ php /path/to/via/xxx.php start
-$ php /path/to/via/xxx.php restart
-$ php /path/to/via/xxx.php stop
+# Restart Via server
+$ php examples/via_websocket_serv_builtin.php restart
+
+# Stop Via server
+$ php examples/via_websocket_serv_builtin.php stop
+```
+
+* Run in daemon
+```shell
+$ php /path/to/via/xxx.php start --env=prod
+# OR
+$ php /path/to/via/xxx.php start --eprod
+$
+$ ps auxf | grep Via
 ```
 
 ## Do it yourself
+
+* Simplest configure
 ```php
-# Simplest configure
+include '/path/to/vendor/autoload.php';
 
 (new \Via\Server('tcp://0.0.0.0:8080'))->run();
 ```
 
+* Full configure
 ```php
-# All configure
-
-$socket = 'tcp://0.0.0.0:8080';
+inlcude '/path/to/vendor/autoload.php';
 
 $server = new \Via\Server();
+
+$socket = 'tcp://0.0.0.0:8080';
 
 $server
     // Parameter.
@@ -143,8 +154,8 @@ $server
 * Check environment.  
 * Parse command.  
 * Initialize master process information.    
-* Fork child process, install signal for child, poll on child.  
-* Create socket server (like: create socket, bind, listen, set option).  
+*   Fork child process, install signal for child, poll on child.  
+*   Create socket server (like: create socket, bind, listen, set option).  
 * Block on master, monitor any child process and restart who exited.  
 
 ## Tests
@@ -165,7 +176,7 @@ Composer Document: https://getcomposer.org/doc/
 Symfony Console Component: http://symfony.com/doc/current/components/console.html
 
 ## Contribute:  
-Any pull requests to improve **via** are welcome.  
+Any pull requests to improve **phvia/via** are welcome.  
 
 Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
 
