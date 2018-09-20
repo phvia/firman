@@ -6,7 +6,7 @@
  * @author farwish <farwish@foxmail.com>
  */
 
-include __DIR__ . '/../vendor/autoload.php';
+include 'loader.php';
 
 $socket = 'tcp://0.0.0.0:8080';
 

@@ -74,7 +74,7 @@ class Server
      *
      * @var string $processTitle
      */
-    protected $processTitle = 'Via';
+    protected $processTitle = 'via-pm';
 
     /**
      * Max client number waited in socket queue.
@@ -156,7 +156,7 @@ class Server
     /**
      * Monitored signals.
      *
-     * Tip: If processes stopped by SIGSTOP(ctrl+z), use `ps auxf | grep -v grep | grep Via | awk '{print $2}' | xargs kill -CONT`
+     * Tip: If processes stopped by SIGSTOP(ctrl+z), use `ps auxf | grep -v grep | grep via-pm | awk '{print $2}' | xargs kill -CONT`
      * recover from `T` to `S`.
      *
      * @var array $signals
@@ -349,11 +349,11 @@ class Server
         self::strict();
 
         // Combine with symfony console.
-        $app = new Application("PHP multi-process and non-blocking I/O library.\nVia package", self::VERSION);
+        $app = new Application("PHP multi-process and non-blocking I/O library.\nvia-pm package", self::VERSION);
         foreach ($this->commands as $cmd) {
             $app->register($cmd)
-                ->setDescription(ucfirst("{$cmd} Via server"))
-                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'The Environment name (dev or prod)', 'dev')
+                ->setDescription(ucfirst("{$cmd} via-pm server"))
+                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'Environment name [dev,prod], dev in foreground, prod in daemon', 'dev')
                 ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {
                         $this->daemon = true;
@@ -362,11 +362,12 @@ class Server
                     switch ($cmd) {
                         case 'start':
 
+                            // Daemonize if needed.
                             if ($this->daemon){
                                 self::daemonize();
                             }
 
-                            // Default.
+                            // Initialize global information for master.
                             self::initializeMaster();
 
                             // Create socket, Bind and Listen.
@@ -380,8 +381,10 @@ class Server
                             // So bind and listen in child when reuseport.
                             // self::createServer();
 
-                            self::forks();
+                            // Fork workers.
+                            self::forkUntilReach();
 
+                            // Success tip after fork.
                             if ($this->daemon) {
                                 $output->writeln("In production mode, daemon [<info>on</info>].");
                                 $output->writeln(sprintf('Start success, input <info>php %s stop</info> to quit.', $argv[0]));
@@ -390,17 +393,18 @@ class Server
                                 $output->writeln('Start success, press <info>Ctrl + C</info> to quit.');
                             }
 
+                            // Monitor any child stopped.
                             self::monitor();
 
                             break;
                         case 'restart':
 
                             // Quit child.
-                            self::quitChild($cmd);
+                            if (self::quitChild($cmd)) {
+                                $message = sprintf('Server %s %s success.', $this->processTitle, $cmd);
 
-                            $message = sprintf('Server %s %s success.', $this->processTitle, $cmd);
-
-                            exit($message . PHP_EOL);
+                                exit($message . PHP_EOL);
+                            }
 
                             break;
                         case 'stop':
@@ -472,38 +476,45 @@ class Server
         }
 
         if (self::isMasterAlive()) {
+            // Already running.
             throw new Exception(sprintf('Already running, master pid %s, start file (%s)', $this->ppid, $this->serverInfo['start_file']));
         } else {
+            // Init ppid and pids container.
             $this->ppid = posix_getpid();
             $this->pids[$this->ppid] = [];
-            if (! file_exists($this->serverInfo['pid_file'])) {
-                touch($this->serverInfo['pid_file']);
-            }
-            file_put_contents($this->serverInfo['pid_file'], $this->ppid, LOCK_EX);
-            cli_set_process_title(sprintf('%s master process, start file (%s)', $this->processTitle, $this->serverInfo['start_file']));
 
-            // Install signal for master.
+            // Init start file and pid file.
+            $start_file = $this->serverInfo['start_file'];
             $pid_file = $this->serverInfo['pid_file'];
+            if (! file_exists($pid_file)) {
+                touch($pid_file);
+            }
+            file_put_contents($pid_file, $this->ppid, LOCK_EX);
+
+            // Init master process title.
+            cli_set_process_title(sprintf('%s master process, start file (%s)', $this->processTitle, $start_file));
+
+            // Init signal(SIGINT) handler for ctrl+c action.
             $return_value = pcntl_signal(SIGINT, function($signo, $siginfo) use ($pid_file) {
                 @unlink($pid_file);
                 exit(0);
             });
             if (! $return_value) {
-                throw new Exception('Install signal failed.');
+                throw new Exception('Install signal(SIGINT) failed.');
             }
         }
 
-        // TODO: notice child to quit too when parent quited.
+        // TODO: notify child to quit too when parent quited.
     }
 
     /**
      * Check if master pid alive.
      *
-     * @return bool  true is alive
+     * @return int|bool return master pid if alive or false
      *
      * @throws Exception
      */
-    protected function isMasterAlive(): bool
+    protected function isMasterAlive()
     {
         $backtrace = debug_backtrace();
 
@@ -516,7 +527,7 @@ class Server
             // Ping.
             $this->ppid = (int)file_get_contents($this->serverInfo['pid_file']);
             if ($this->ppid && posix_kill($this->ppid, 0)) {
-                return true;
+                return (int)$this->ppid;
             }
         }
 
@@ -538,31 +549,51 @@ class Server
     protected function createServer()
     {
         if ($this->localSocket) {
-            // Parse socket name.
+            // Parse socket name like `tcp://0.0.0.0:8090`.
             // TODO: Support Unix domain
             $list = explode(':', $this->localSocket);
             $this->protocol = $list[0] ?? null;
             $this->address  = $list[1] ? ltrim($list[1], '\/\/') : null;
             $this->port     = $list[2] ?? null;
 
-            // Create a stream context.
-            // Options see http://php.net/manual/en/context.socket.php
-            // Available socket options see http://php.net/manual/en/function.socket-get-option.php
             // `Stream` extension instead of `Socket` extension in order to support fread/fwrite on connection.
-            // `man 7 socket` seek more information if needed.
+            //
+            // 封装体可用的少量套接字选项.
+            // Available Socket Context Options for all wrappers.
+            // @doc http://php.net/manual/en/context.socket.php
             $options = [
                 'socket' => [
+                    // The syntax is ip:port for IPv4, and [ip]:port for IPv6.
+                    // Setting the IP or port to 0 will let the system choose
+                    // the IP and/or port.
                     'bindto'        => $this->address . ':' . $this->port,
+
+                    // Used to liimit the number of outstanding connections in the socket's listen queue.
                     'backlog'       => $this->backlog,
-                    // Each child listen in same port to avoid thundering herd.
-                    // Improve load distribution compare to traditional.
+
+                    // PHP7.0.1
+                    // Overrides the OS default regarding mapping IPv4 into IPv6.
+                    //'ipv6_v6only'   => '',
+
+                    // 7.0.0
+                    // Allows multiple bindings to a same ip:port pair.
+                    // Avoid thundering herd.
                     'so_reuseport'  => true,
+
+                    // PHP7.0.0
+                    // Enables sending and receiving data to/from broadcast addresses.
+                    //'so_broadcast'  => '',
+
+                    // PHP7.1.0
+                    // Setting this to TRUE will set SOL_TCP,NO_DELAY=1
+                    // appropriately, thus disabling the TCP Nagle algorithm.
+                    //'tcp_nodelay'   => true,
                 ],
             ];
             $params  = null;
             $context = stream_context_create($options, $params);
 
-            // Create an Internet or Unix domain server socket.
+            // Creates a stream or datagram socket on the specified local socket.
             $errno   = 0;
             $errstr  = '';
             $flags   = ($this->protocol === 'udp') ? STREAM_SERVER_BIND : STREAM_SERVER_BIND | STREAM_SERVER_LISTEN;
@@ -571,24 +602,30 @@ class Server
                 throw new Exception(sprintf('Create socket server fail, errno: %s, errstr: %s', $errno, $errstr));
             }
 
-            // More socket option, must install sockets extension.
+            // 把封装了套接字的流导入到socket扩展的资源中.
+            // Imports a stream that encapsulates a socket into a socket extension resource.
             $socket = socket_import_stream($this->socketStream);
 
             if ($socket !== false && $socket !== null) {
-                // Predefined constants: http://php.net/manual/en/sockets.constants.php
-                // Level number see: http://php.net/manual/en/function.getprotobyname.php; Or `php -r "print_r(getprotobyname('tcp'));"`, SOL_TCP==6
-                // Option name see: http://php.net/manual/en/function.socket-get-option.php
-                //                  http://php.net/manual/en/function.socket-set-option.php
+
+                // 套接字可用的全量套接字选项.
+                // Available Socket Options for the socket.
+                // @doc http://php.net/manual/en/function.socket-get-option.php
+
+                // Level number: `php -r "print_r(getprotobyname('tcp'));"`, SOL_TCP==6
+                // @doc http://php.net/manual/en/function.getprotobyname.php;
 
                 // Connections are kept active with periodic transmission of messages,
-                // If the connected socket fails to respond to these messages, the connection is broken and processes writing to that socket are notified with a SIGPIPE signal.
+                // if the connected socket fails to respond to these messages,
+                // the connection is broken and processes writing to that socket are notified with a SIGPIPE signal.
                 socket_set_option($socket, SOL_SOCKET, SO_KEEPALIVE, 1);
+
                 // Nagle TCP algorithm is disabled.
                 socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
             }
 
             // Switch to non-blocking mode, affacts calls like fgets and fread that read from the stream.
-            // To ensure that accept() never blocks.
+            // In non-blocking mode, an fgets call will always return right away.
             if (! stream_set_blocking($this->socketStream, false)) {
                 throw new Exception('Switch to non-blocking mode fail');
             }
@@ -607,8 +644,7 @@ class Server
      */
     protected function daemonize()
     {
-        umask(0);
-
+        // 1.1
         $pid = pcntl_fork();
 
         switch ($pid) {
@@ -618,27 +654,35 @@ class Server
             case 0:
                 // Child
 
+                // 2.
                 // setsid: Make the current process a session leader to lose controlling TTY.
                 if (-1 === ($sid = posix_setsid())) {
-                    throw new Exception('Setsid error');
+                    throw new Exception('Daemonize setsid error');
                 }
 
+                // 3.
                 // Change current working directory to the root
                 // so we won't prevent file systems from being unmounted.
                 if (false === chdir('/')) {
-                    throw new Exception(sprintf('Change working directory to "%s" failed', '/'));
+                    throw new Exception(sprintf('Daemonize change working directory to "%s" failed', '/'));
                 }
 
+                // 4.
+                umask(0);
+
+                // 5.
                 fclose(STDIN);
                 fclose(STDOUT);
                 fclose(STDERR);
 
-                fopen('/dev/null', 'rw');
+                // Open descriptor if you need later.
+                //fopen('/dev/null', 'rw');
 
                 break;
             default:
                 // Master
 
+                // 1.2
                 // Let shell think it execute finished.
                 exit(0);
         }
@@ -666,7 +710,7 @@ class Server
 
             // Fork again condition: normal exited or killed by SIGTERM.
             // if ( pcntl_wifexited($status) || (pcntl_wifsignaled($status) && in_array(pcntl_wtermsig($status), [SIGTERM])) ) {
-            self::forks();
+            self::forkUntilReach();
             // }
         }
     }
@@ -674,14 +718,14 @@ class Server
     /**
      * Fork child process until reach 'count' number.
      *
-     * Child install signal and poll on descriptor.
+     * Child install signal and poll on theirself descriptor.
      *
      * @throws Exception
      */
-    protected function forks()
+    protected function forkUntilReach()
     {
-        while ( empty($this->pids) || count($this->pids[$this->ppid]) < ($this->count) ) {
-            self::fork();
+        while ( empty($this->pids) || (count($this->pids[$this->ppid]) < $this->count) ) {
+            self::forkWorker();
         }
     }
 
@@ -690,28 +734,31 @@ class Server
      *
      * @throws Exception
      */
-    protected function fork()
+    protected function forkWorker()
     {
         $pid = pcntl_fork();
 
         switch ($pid) {
             case -1:
-                throw new Exception('Fork failed.');
+                throw new Exception('Fork worker failed.');
                 break;
             case 0:
-                // Child process, do business, can exit at last.
-                cli_set_process_title(sprintf('%s child process', $this->processTitle));
+                // Set child process title.
+                cli_set_process_title(sprintf('%s worker process', $this->processTitle));
 
+                // Create socket, bind, listen.
                 self::createServer();
 
+                // Install child signals.
                 self::installChildSignal();
 
+                // Select multiplexing, accept connection, doing work.
                 self::poll();
 
                 exit(0);
                 break;
             default:
-                // Parent(master) process, not do business, cant exit.
+                // Parent(master) process, not do business, can not exit.
                 $this->pids[$this->ppid][$pid] = $pid;
                 break;
         }
@@ -834,20 +881,20 @@ class Server
      */
     protected function quitChild(string $command_type): bool
     {
-        if (! self::isMasterAlive()) {
+        if (! $this->ppid = self::isMasterAlive()) {
             throw new Exception(sprintf('Server %s not running.', $this->processTitle));
         }
 
         // TODO: Another goodness way
         // Find child process and quit.
-        $cmd = "ps ax | grep -v color | grep -v vim | grep {$this->processTitle} | awk '{print $1}'";
+        $cmd = "ps --ppid {$this->ppid} | awk '/[0-9]/{print $1}'";
         exec($cmd, $output, $return_var);
         if ($return_var === 0) {
             if ($output && is_array($output)) {
                 foreach ($output as $pid) {
 
                     // Gid equals to master pid is valid.
-                    if ( ($pid != $this->ppid) && (posix_getpgid($pid) == $this->ppid) ) {
+                    if ( posix_getpgid($pid) == $this->ppid ) {
 
                         switch ($command_type) {
                             case 'restart':
