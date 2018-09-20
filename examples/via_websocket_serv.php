@@ -6,7 +6,7 @@
  * @author farwish <farwish@foxmail.com>
  */
 
-include __DIR__ . '/../vendor/autoload.php';
+include 'loader.php';
 
 $socket = 'tcp://0.0.0.0:8080';
 
@@ -21,8 +21,8 @@ $server
     ->setCount(2)
     // option, can also be in constructor
     ->setSocket($socket)
-    // option, default is Via
-    ->setProcessTitle('Via')
+    // option, default is via-pm
+    //->setProcessTitle('via-pm')
     // option, default is /tmp
     ->setPpidPath('/tmp')
     // option, default is 100

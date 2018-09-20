@@ -18,7 +18,7 @@ $ composer require phpvia/via
 ```shell
 $ php /path/to/via/examples/via_websocket_serv_builtin.php
 
-Via package 0.0.1
+via-pm package 0.0.1
 
 Usage:
   command [options] [arguments]
@@ -35,9 +35,9 @@ Options:
 Available commands:
   help     Displays help for a command
   list     Lists commands
-  restart  Restart Via server
-  start    Start Via server
-  stop     Stop Via server
+  restart  Restart via-pm server
+  start    Start via-pm server
+  stop     Stop via-pm server
 ```
 
 * Show usage detail
@@ -58,7 +58,7 @@ Options:
   -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 
 Help:
-  Start Via server
+  Start via-pm server
 ```
 
 * Process control
@@ -66,10 +66,10 @@ Help:
 # After start server, you can access examples/ws.html in web browser
 $ php examples/via_websocket_serv_builtin.php start
 
-# Restart Via server
+# Restart via-pm server
 $ php examples/via_websocket_serv_builtin.php restart
 
-# Stop Via server
+# Stop via-pm server
 $ php examples/via_websocket_serv_builtin.php stop
 ```
 
@@ -79,7 +79,7 @@ $ php /path/to/via/xxx.php start --env=prod
 # OR
 $ php /path/to/via/xxx.php start --eprod
 $
-$ ps auxf | grep Via
+$ ps auxf | grep via
 ```
 
 ## Do it yourself
@@ -110,9 +110,9 @@ $server
     // Set socket
     ->setSocket($socket)
     
-    // optional, default is Via
+    // optional, default is via-pm
     // Set process title
-    ->setProcessTitle('Via')
+    ->setProcessTitle('via')
     
     // optional, default is /tmp
     // Set the path of file saved ppid
