@@ -1,19 +1,19 @@
 <?php
 /**
- * Via package.
+ * Firman package.
  *
  * @license MIT
  * @author farwish <farwish@foxmail.com>
  */
 
-namespace Via;
+namespace Firman;
 
-use Via\Protocol\WebSocket;
+use Firman\Protocol\WebSocket;
 
 /**
  * Class Connection
  *
- * @package Via
+ * @package Firman
  */
 class Connection
 {

@@ -30,7 +30,7 @@ while(1)
             trigger_error("Client request is empty!");
         }
         $headers = "HTTP/1.1 200 OK\r\n"
-            ."Server: via\r\n"
+            ."Server: firman\r\n"
             ."Content-Type: text/html; charset=utf-8\r\n"
             ."\r\n";
         $body = "<h1>hello world</h1><br><br>";

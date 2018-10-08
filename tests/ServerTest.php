@@ -1,14 +1,14 @@
 <?php
 /**
- * Via package.
+ * Firman package.
  *
  * @license MIT
  * @author farwish <farwish@foxmail.com>
  */
 
-namespace Via\Tests;
+namespace Firman\Tests;
 
-use Via\Server;
+use Firman\Server;
 use PHPUnit\Framework\TestCase;
 
 final class ServerTest extends TestCase

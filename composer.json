@@ -1,5 +1,5 @@
 {
-    "name": "phvia/via",
+    "name": "phvia/firman",
     "description": "PHP multi-process and non-blocking I/O library.",
     "type": "library",
     "license": "MIT",
@@ -25,12 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Via\\": "./"
+            "Firman\\": "./"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Via\\Tests\\": "tests/"
+            "Firman\\Tests\\": "tests/"
         }
     },
     "scripts": {

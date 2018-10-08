@@ -1,6 +1,6 @@
 <?php
 /**
- * Via package.
+ * Firman package.
  *
  * @license MIT
  * @author farwish <farwish@foxmail.com>
@@ -10,7 +10,7 @@ include 'loader.php';
 
 $socket = 'tcp://0.0.0.0:8080';
 
-$server = new \Via\Server();
+$server = new \Firman\Server();
 
 $has_hand_shake = false;
 
@@ -21,8 +21,8 @@ $server
     ->setCount(2)
     // option, can also be in constructor
     ->setSocket($socket)
-    // option, default is via-pm
-    //->setProcessTitle('via-pm')
+    // option, default is Firman
+    //->setProcessTitle('Firman')
     // option, default is /tmp
     ->setPpidPath('/tmp')
     // option, default is 100
@@ -46,7 +46,7 @@ $server
 //        $connection->close();
 
         $custom_response_header = [
-            'Server' => 'Via custom',
+            'Server' => 'Firman custom',
         ];
 
         while (true) {
@@ -221,7 +221,7 @@ $server
             sleep(5);
 
             // TODO: If client browser close or refresh, child will block on recvfrom, later will cause SIGPIPE problem, may close this client connection.
-            // TODO: the SIGPIPE signal default action is kill current process. so Via reload a new one.
+            // TODO: the SIGPIPE signal default action is kill current process. so Firman reload a new one.
             // TODO: we can set SIG_IGN in installChildSignal, but it can not deal with any connection, recvfrom noting.
             //            recvfrom(7, "", 8192, 0, NULL, NULL)    = 0
             //            nanosleep({1, 0}, 0x7ffdfe49c870)       = 0

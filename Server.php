@@ -1,16 +1,16 @@
 <?php
 /**
- * Via package.
+ * Firman package.
  *
  * @license MIT
  * @author farwish <farwish@foxmail.com>
  */
 
-namespace Via;
+namespace Firman;
 
 use Exception;
-use Via\Connection;
-use Via\Protocol\WebSocket;
+use Firman\Connection;
+use Firman\Protocol\WebSocket;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Class Server
  *
- * @package Via
+ * @package Firman
  */
 class Server
 {
@@ -74,7 +74,7 @@ class Server
      *
      * @var string $processTitle
      */
-    protected $processTitle = 'via-pm';
+    protected $processTitle = 'Firman';
 
     /**
      * Max client number waited in socket queue.
@@ -156,7 +156,7 @@ class Server
     /**
      * Monitored signals.
      *
-     * Tip: If processes stopped by SIGSTOP(ctrl+z), use `ps auxf | grep -v grep | grep via-pm | awk '{print $2}' | xargs kill -CONT`
+     * Tip: If processes stopped by SIGSTOP(ctrl+z), use `ps auxf | grep -v grep | grep Firman | awk '{print $2}' | xargs kill -CONT`
      * recover from `T` to `S`.
      *
      * @var array $signals
@@ -334,7 +334,7 @@ class Server
      * Parse command and option.
      *
      * <code>
-     *   (new \Via\Server('tcp://0.0.0.0:8080'))->run();
+     *   (new \Firman\Server('tcp://0.0.0.0:8080'))->run();
      * </code>
      *
      * @doc http://symfony.com/doc/current/components/console/single_command_tool.html
@@ -349,10 +349,10 @@ class Server
         self::strict();
 
         // Combine with symfony console.
-        $app = new Application("PHP multi-process and non-blocking I/O library.\nvia-pm package", self::VERSION);
+        $app = new Application("PHP multi-process and non-blocking I/O library.\nFirman package", self::VERSION);
         foreach ($this->commands as $cmd) {
             $app->register($cmd)
-                ->setDescription(ucfirst("{$cmd} via-pm server"))
+                ->setDescription(ucfirst("{$cmd} Firman server"))
                 ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'Environment name [dev,prod], dev in foreground, prod in daemon', 'dev')
                 ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {

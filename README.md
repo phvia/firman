@@ -1,4 +1,4 @@
-# via
+# Firman
 
 PHP multi-process and non-blocking I/O library.
 
@@ -9,16 +9,16 @@ PHP multi-process and non-blocking I/O library.
 
 ## Install
 ```shell
-$ composer require phpvia/via
+$ composer require phvia/firman:dev-master
 ```
 
 ## Run example
 
 * Show usage  
 ```shell
-$ php /path/to/via/examples/via_websocket_serv_builtin.php
+$ php /path/to/firman/examples/via_websocket_serv_builtin.php
 
-via-pm package 0.0.1
+Firman package 0.0.1
 
 Usage:
   command [options] [arguments]
@@ -35,14 +35,14 @@ Options:
 Available commands:
   help     Displays help for a command
   list     Lists commands
-  restart  Restart via-pm server
-  start    Start via-pm server
-  stop     Stop via-pm server
+  restart  Restart Firman server
+  start    Start Firman server
+  stop     Stop Firman server
 ```
 
 * Show usage detail
 ```shell
-$ php /path/to/via/examples/via_websocket_serv_builtin.php start -h
+$ php /path/to/firman/examples/via_websocket_serv_builtin.php start -h
 
 Usage:
   start [options]
@@ -58,7 +58,7 @@ Options:
   -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 
 Help:
-  Start via-pm server
+  Start Firman server
 ```
 
 * Process control
@@ -66,20 +66,20 @@ Help:
 # After start server, you can access examples/ws.html in web browser
 $ php examples/via_websocket_serv_builtin.php start
 
-# Restart via-pm server
+# Restart Firman server
 $ php examples/via_websocket_serv_builtin.php restart
 
-# Stop via-pm server
+# Stop Firman server
 $ php examples/via_websocket_serv_builtin.php stop
 ```
 
 * Run in daemon
 ```shell
-$ php /path/to/via/xxx.php start --env=prod
+$ php /path/to/firman/xxx.php start --env=prod
 # OR
-$ php /path/to/via/xxx.php start --eprod
+$ php /path/to/firman/xxx.php start --eprod
 $
-$ ps auxf | grep via
+$ ps auxf | grep Firman
 ```
 
 ## Do it yourself
@@ -88,14 +88,14 @@ $ ps auxf | grep via
 ```php
 include '/path/to/vendor/autoload.php';
 
-(new \Via\Server('tcp://0.0.0.0:8080'))->run();
+(new \Firman\Server('tcp://0.0.0.0:8080'))->run();
 ```
 
 * Full configure
 ```php
 inlcude '/path/to/vendor/autoload.php';
 
-$server = new \Via\Server();
+$server = new \Firman\Server();
 
 $socket = 'tcp://0.0.0.0:8080';
 
@@ -110,9 +110,9 @@ $server
     // Set socket
     ->setSocket($socket)
     
-    // optional, default is via-pm
+    // optional, default is Firman
     // Set process title
-    ->setProcessTitle('via')
+    ->setProcessTitle('Firman')
     
     // optional, default is /tmp
     // Set the path of file saved ppid
@@ -176,7 +176,7 @@ Composer Document: https://getcomposer.org/doc/
 Symfony Console Component: http://symfony.com/doc/current/components/console.html
 
 ## Contribute:  
-Any pull requests to improve **phvia/via** are welcome.  
+Any pull requests to improve **phvia/firman** are welcome.  
 
 Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
 
@@ -184,5 +184,5 @@ Coding Standards: https://symfony.com/doc/current/contributing/code/standards.ht
 QQ group: 377154148
 
 ## License
-[MIT](https://github.com/phpvia/via/blob/master/LICENSE)
+[MIT](https://github.com/phvia/firman/blob/master/LICENSE)
 
