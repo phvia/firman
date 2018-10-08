@@ -1,17 +1,17 @@
 <?php
 /**
- * Via package.
+ * Firman package.
  *
  * @license MIT
  * @author farwish <farwish@foxmail.com>
  */
 
-namespace Via\Protocol;
+namespace Firman\Protocol;
 
 /**
  * Class WebSocket
  *
- * @package Via\Protocol
+ * @package Firman\Protocol
  */
 class WebSocket
 {
@@ -25,7 +25,7 @@ class WebSocket
     /**
      * Custom append HTTP response header.
      *
-     * Example: ['Server' => 'Via super']
+     * Example: ['Server' => 'Firman super']
      *
      * @var array
      */

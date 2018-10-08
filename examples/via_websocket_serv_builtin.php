@@ -1,6 +1,6 @@
 <?php
 /**
- * Via package.
+ * Firman package.
  *
  * @license MIT
  * @author farwish <farwish@foxmail.com>
@@ -10,7 +10,7 @@ include 'loader.php';
 
 $socket = 'tcp://0.0.0.0:8080';
 
-$server = new \Via\Server();
+$server = new \Firman\Server();
 
 $server
     // Parameter.
@@ -19,8 +19,8 @@ $server
     ->setCount(2)
     // option, can also be in constructor
     ->setSocket($socket)
-    // option, default is via-pm
-    //->setProcessTitle('via-pm')
+    // option, default is Firman
+    //->setProcessTitle('Firman')
     // option, default is /tmp
     ->setPpidPath('/tmp')
     // option, default is 100
