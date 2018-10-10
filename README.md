@@ -170,7 +170,7 @@ Our position is focus on socket :
 * Support Unix domain, UDP, ect.  
 * Robustness.
 
-## Resources:  
+## Resources:
 Composer Document: https://getcomposer.org/doc/  
 
 Symfony Console Component: http://symfony.com/doc/current/components/console.html
@@ -178,7 +178,11 @@ Symfony Console Component: http://symfony.com/doc/current/components/console.htm
 ## Contribute:  
 Any pull requests to improve **phvia/firman** are welcome.  
 
-Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
+Coding style follow PSR2: https://www.php-fig.org/psr/psr-2/  
+Using PHP_CodeSniffer tool: https://github.com/squizlabs/PHP_CodeSniffer  
+Running check: `php phpcs.phar --standard=psr2 ./`  
+
+Recommend Coding Standards: https://symfony.com/doc/current/contributing/code/standards.html
 
 ## Group
 QQ group: 377154148

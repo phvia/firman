@@ -31,11 +31,11 @@ $con
     // Event callback.
     //
     // option, when client connected with server, callback trigger.
-    ->onConnection(function($connection) {
+    ->onConnection(function ($connection) {
         echo "New client connected." . PHP_EOL;
     })
     // option, when client send message to server, callback trigger.if
-    ->onMessage(function($connection) {
+    ->onMessage(function ($connection) {
         $method             = '';
         $url                = '';
         $protocol_version   = '';
@@ -50,7 +50,6 @@ $con
         $buffer = fread($connection, 8192);
 
         if (false !== $buffer) {
-
             // Http request format check.
             if (false !== strstr($buffer, "\r\n")) {
                 $list = explode("\r\n", $buffer);
@@ -62,12 +61,14 @@ $con
                         if (strlen($line) === $content_length) {
                             $request_body = $line;
                         } else {
-                            throw new \Exception("Content-Length {$content_length} not match request body length " . strlen($line) . "\n");
+                            throw new \Exception(
+                                "Content-Length {$content_length} not match request body length " . strlen($line) . "\n"
+                            );
                         }
                         break;
                     }
 
-                    if ( empty($line) ) {
+                    if (empty($line)) {
                         $end_of_header = true;
                     } else {
                         // Header.
@@ -88,7 +89,7 @@ $con
                             list ($key, $value) = $array;
                             $request_header[$key] = $value;
 
-                            if ( strtolower($key) === strtolower('Content-type') ) {
+                            if (strtolower($key) === strtolower('Content-type')) {
                                 $content_type = $value;
                             }
 
@@ -120,4 +121,3 @@ $con
     // Start server.
     //
     ->run();
-
