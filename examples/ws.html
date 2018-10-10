@@ -16,7 +16,7 @@
         // 这样单个server就能实现多个 websocket 子协议，即一个服务可以处理不同类型协议的交互.
         // 构造函数在连接遇到阻塞时，将抛出异常;
         // 连接错误则触发 error 事件, 随后是触发 close 事件，表明连接关闭.
-        var ws = new WebSocket('ws://10.0.2.15:8080');
+        var ws = new WebSocket('ws://192.168.0.53:8080');
 
         ws.onopen = function(event) {
 

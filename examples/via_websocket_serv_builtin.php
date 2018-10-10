@@ -33,11 +33,11 @@ $server
     // Event callback.
     //
     // option, when client connected with server, callback trigger.
-    ->onConnection(function() {
+    ->onConnection(function () {
         echo "Server say: new client connected.\n";
     })
     // option, when client send message to server, callback trigger.
-    ->onMessage(function($connection, $received_string) {
+    ->onMessage(function ($connection, $received_string) {
 
         // Echo client data.
         echo sprintf("Server say, data from client is '%s'\n", $received_string);

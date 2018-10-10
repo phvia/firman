@@ -35,11 +35,11 @@ $server
     // Event callback.
     //
     // option, when client connected with server, callback trigger.
-    ->onConnection(function($connection) {
+    ->onConnection(function ($connection) {
         //echo "Server: New client connected." . PHP_EOL;
     })
     // option, when client send message to server, callback trigger.
-    ->onMessage(function($connection) use ($has_hand_shake) {
+    ->onMessage(function ($connection) use ($has_hand_shake) {
 
 //        $connection->recv();
 //        $connection->send();
@@ -50,10 +50,8 @@ $server
         ];
 
         while (true) {
-
             // Parse Http Header and Hand Shake.
             if (! $has_hand_shake) {
-
                 // Parse http header.
                 // www.cnblogs.com/farwish/p/8418969.html
 
@@ -91,28 +89,27 @@ $server
                 // Http protocol: https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Overview
                 // Http request format check.
                 if (false !== $buffer) {
-
                     if (false !== strstr($buffer, "\r\n")) {
                         $list = explode("\r\n", $buffer);
                     }
 
                     if ($list) {
                         foreach ($list as $line) {
-
                             if ($end_of_header) {
-
                                 // Check body length is match Content-Length.
 
                                 if (strlen($line) === $content_length) {
                                     $request_body = $line;
                                     break;
                                 } else {
-                                    throw new \Exception("Content-Length {$content_length} not match request body length " . strlen($line) . "\n");
+                                    throw new \Exception(
+                                        "Content-Length {$content_length} not match request body length " .
+                                        strlen($line) . "\n"
+                                    );
                                 }
                             }
 
                             if (!empty($line)) {
-
                                 if (false === strstr($line, ': ')) {
                                     $array = explode(' ', $line);
 
@@ -124,7 +121,6 @@ $server
                                         $protocol_version = $array[2];
                                     }
                                 } else {
-
                                     // Request header.
 
                                     $array = explode(': ', $line);
@@ -156,7 +152,9 @@ $server
                 $response_header .= "Upgrade: websocket\r\n";
                 $response_header .= "Connection: Upgrade\r\n";
                 $response_header .= "Sec-WebSocket-Accept: " .
-                    base64_encode(sha1($request_header['Sec-WebSocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true)) . "\r\n";
+                    base64_encode(
+                        sha1($request_header['Sec-WebSocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true)
+                    ) . "\r\n";
                 if ($custom_response_header) {
                     // Append custom header
                     foreach ($custom_response_header as $k => $v) {
@@ -178,14 +176,12 @@ $server
             // Base Data Framing Protocol: https://tools.ietf.org/html/rfc6455#page-28
 
             if ($buffer = fread($connection, 8192)) {
-
                 $len = $masks = $data = $decoded = null;
                 $len = ord($buffer[1]) & 127;
                 if ($len === 126) {
                     $masks = substr($buffer, 4, 4);
                     $data = substr($buffer, 8);
-
-                } else if ($len === 127) {
+                } elseif ($len === 127) {
                     $masks = substr($buffer, 10, 4);
                     $data = substr($buffer, 14);
                 } else {
@@ -220,7 +216,8 @@ $server
 
             sleep(5);
 
-            // TODO: If client browser close or refresh, child will block on recvfrom, later will cause SIGPIPE problem, may close this client connection.
+            // TODO: If client browser close or refresh, child will block on recvfrom,
+            //      later will cause SIGPIPE problem, may close this client connection.
             // TODO: the SIGPIPE signal default action is kill current process. so Firman reload a new one.
             // TODO: we can set SIG_IGN in installChildSignal, but it can not deal with any connection, recvfrom noting.
             //            recvfrom(7, "", 8192, 0, NULL, NULL)    = 0

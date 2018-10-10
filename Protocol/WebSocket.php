@@ -50,7 +50,7 @@ class WebSocket
      */
     public static function doHandshake($socket_connection): bool
     {
-        if (! is_resource($socket_connection) || (! $request_headers = static::parseHttpHeader($socket_connection)) ) {
+        if (! is_resource($socket_connection) || (! $request_headers = static::parseHttpHeader($socket_connection))) {
             return false;
         }
 
@@ -59,7 +59,12 @@ class WebSocket
             $response_header = "HTTP/1.1 101 Switching Protocols\r\n";
             $response_header .= "Upgrade: websocket\r\n";
             $response_header .= "Connection: Upgrade\r\n";
-            $response_header .= sprintf("Sec-WebSocket-Accept: %s\r\n", base64_encode(sha1($request_headers['Sec-WebSocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true)));
+            $response_header .= sprintf(
+                "Sec-WebSocket-Accept: %s\r\n",
+                base64_encode(
+                    sha1($request_headers['Sec-WebSocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true)
+                )
+            );
 
             if (static::$custom_response_headers) {
                 foreach (static::$custom_response_headers as $k => $v) {
@@ -121,13 +126,14 @@ class WebSocket
             if ($payload_len < 126) {
                 $masking_key = substr($buffer, 2, 4);
                 $payload = substr($buffer, 6);
-            } elseif ($payload_len == 126 ) {
+            } elseif ($payload_len == 126) {
                 $masking_key = substr($buffer, 4, 4);
                 $payload = substr($buffer, 8);
             } elseif ($payload_len == 127) {
                 $masking_key = substr($buffer, 10, 4);
                 $payload = substr($buffer, 14);
-            } else {}
+            } else {
+            }
 
             $data_length = strlen($payload);
 
@@ -195,7 +201,6 @@ class WebSocket
         $buffer = fread($socket_connection, 8192);
 
         if (false !== $buffer) {
-
             $lines = [];
             if (false !== strstr($buffer, "\r\n")) {
                 $lines = explode("\r\n", $buffer);
@@ -203,9 +208,7 @@ class WebSocket
 
             if ($lines) {
                 foreach ($lines as $line) {
-
                     if ($end_of_request_header) {
-
                         // If end of request header, check body length is matched Content-Length.
                         if (strlen($line) == $content_length) {
                             // Get body content and parse over.
@@ -215,7 +218,6 @@ class WebSocket
                     }
 
                     if (! empty($line)) {
-
                         // Request line.
                         // HTTP/1.1 200 OK
                         if (false === strstr($line, ': ')) {

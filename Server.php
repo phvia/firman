@@ -156,7 +156,8 @@ class Server
     /**
      * Monitored signals.
      *
-     * Tip: If processes stopped by SIGSTOP(ctrl+z), use `ps auxf | grep -v grep | grep Firman | awk '{print $2}' | xargs kill -CONT`
+     * Tip: If processes stopped by SIGSTOP(ctrl+z),
+     * use `ps auxf | grep -v grep | grep Firman | awk '{print $2}' | xargs kill -CONT`
      * recover from `T` to `S`.
      *
      * @var array $signals
@@ -193,8 +194,10 @@ class Server
     {
         $this->localSocket = $socket ?: null;
 
-        $this->onConnection = function() {};
-        $this->onMessage    = function() {};
+        $this->onConnection = function () {
+        };
+        $this->onMessage    = function () {
+        };
     }
 
     /**
@@ -241,7 +244,9 @@ class Server
      */
     public function setProcessTitle(string $title)
     {
-        if ($title) $this->processTitle = $title;
+        if ($title) {
+            $this->processTitle = $title;
+        }
 
         return $this;
     }
@@ -269,7 +274,9 @@ class Server
      */
     public function setBacklog(int $backlog)
     {
-        if ($backlog > 0) $this->backlog = $backlog;
+        if ($backlog > 0) {
+            $this->backlog = $backlog;
+        }
 
         return $this;
     }
@@ -283,7 +290,9 @@ class Server
      */
     public function setSelectTimeout(int $selectTimeout)
     {
-        if ($selectTimeout >= 0) $this->selectTimeout = $selectTimeout;
+        if ($selectTimeout >= 0) {
+            $this->selectTimeout = $selectTimeout;
+        }
 
         return $this;
     }
@@ -297,7 +306,9 @@ class Server
      */
     public function setAcceptTimeout(int $acceptTimeout)
     {
-        if ($acceptTimeout >= 0) $this->acceptTimeout = $acceptTimeout;
+        if ($acceptTimeout >= 0) {
+            $this->acceptTimeout = $acceptTimeout;
+        }
 
         return $this;
     }
@@ -353,7 +364,13 @@ class Server
         foreach ($this->commands as $cmd) {
             $app->register($cmd)
                 ->setDescription(ucfirst("{$cmd} Firman server"))
-                ->addOption('env', 'e', InputOption::VALUE_REQUIRED, 'Environment name [dev,prod], dev in foreground, prod in daemon', 'dev')
+                ->addOption(
+                    'env',
+                    'e',
+                    InputOption::VALUE_REQUIRED,
+                    'Environment name [dev,prod], dev in foreground, prod in daemon',
+                    'dev'
+                )
                 ->setCode(function (InputInterface $input, OutputInterface $output) use ($cmd, $argv) {
                     if ($input->getOption('env') === 'prod') {
                         $this->daemon = true;
@@ -361,9 +378,8 @@ class Server
 
                     switch ($cmd) {
                         case 'start':
-
                             // Daemonize if needed.
-                            if ($this->daemon){
+                            if ($this->daemon) {
                                 self::daemonize();
                             }
 
@@ -371,13 +387,16 @@ class Server
                             self::initializeMaster();
 
                             // Create socket, Bind and Listen.
-                            // If no reuseport, bind and listen here, this will cause thundering herd problem, process not available still be waked up.
-                            //      select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
-                            //      select(7, [6], [6], [], {5, 0})         = 1 (in [6], left {2, 22060})
-                            //    * poll([{fd=6, events=POLLIN|POLLERR|POLLHUP}], 1, 10000) = 1 ([{fd=6, revents=POLLIN}])
-                            //    * accept(6, 0x7ffe34ffe390, 0x7ffe34ffe380) = -1 EAGAIN (Resource temporarily unavailable)
-                            //    * poll([{fd=6, events=POLLIN|POLLERR|POLLHUP}], 1, 10000) = 0 (Timeout)
-                            //      select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
+                            // If no reuseport, bind and listen here, this will cause thundering herd problem,
+                            // process not available still be waked up.
+                            // ```
+                            //  select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
+                            //  select(7, [6], [6], [], {5, 0})         = 1 (in [6], left {2, 22060})
+                            //  poll([{fd=6, events=POLLIN|POLLERR|POLLHUP}], 1, 10000) = 1 ([{fd=6, revents=POLLIN}])
+                            //  accept(6, 0x7ffe34ffe390, 0x7ffe34ffe380) = -1 EAGAIN (Resource temporarily unavailable)
+                            //  poll([{fd=6, events=POLLIN|POLLERR|POLLHUP}], 1, 10000) = 0 (Timeout)
+                            //  select(7, [6], [6], [], {5, 0})         = 0 (Timeout)
+                            // ```
                             // So bind and listen in child when reuseport.
                             // self::createServer();
 
@@ -387,7 +406,9 @@ class Server
                             // Success tip after fork.
                             if ($this->daemon) {
                                 $output->writeln("In production mode, daemon [<info>on</info>].");
-                                $output->writeln(sprintf('Start success, input <info>php %s stop</info> to quit.', $argv[0]));
+                                $output->writeln(
+                                    sprintf('Start success, input <info>php %s stop</info> to quit.', $argv[0])
+                                );
                             } else {
                                 $output->writeln("In development mode, daemon [<comment>off</comment>].");
                                 $output->writeln('Start success, press <info>Ctrl + C</info> to quit.');
@@ -398,7 +419,6 @@ class Server
 
                             break;
                         case 'restart':
-
                             // Quit child.
                             if (self::quitChild($cmd)) {
                                 $message = sprintf('Server %s %s success.', $this->processTitle, $cmd);
@@ -408,7 +428,6 @@ class Server
 
                             break;
                         case 'stop':
-
                             // Quit child.
                             if (self::quitChild($cmd)) {
                                 // Quit master.
@@ -416,7 +435,11 @@ class Server
                                     @unlink($this->serverInfo['pid_file']);
                                     $message = sprintf("Server %s %s success.", $this->processTitle, $cmd);
                                 } else {
-                                    $message = sprintf('Master %s process %s stop failure.', $this->processTitle, $this->ppid);
+                                    $message = sprintf(
+                                        'Master %s process %s stop failure.',
+                                        $this->processTitle,
+                                        $this->ppid
+                                    );
                                 }
 
                                 exit($message . PHP_EOL);
@@ -446,7 +469,10 @@ class Server
 
         if (! function_exists('socket_import_stream')) {
             // Must socket extension.
-            throw new Exception('Socket extension must be enabled at compile time by giving the "--enable-sockets" option to "configure"');
+            throw new Exception(
+                'Socket extension must be enabled at compile time
+                by giving the "--enable-sockets" option to "configure"'
+            );
         }
     }
 
@@ -477,7 +503,9 @@ class Server
 
         if (self::isMasterAlive()) {
             // Already running.
-            throw new Exception(sprintf('Already running, master pid %s, start file (%s)', $this->ppid, $this->serverInfo['start_file']));
+            throw new Exception(
+                sprintf('Already running, master pid %s, start file (%s)', $this->ppid, $this->serverInfo['start_file'])
+            );
         } else {
             // Init ppid and pids container.
             $this->ppid = posix_getpid();
@@ -495,7 +523,7 @@ class Server
             cli_set_process_title(sprintf('%s master process, start file (%s)', $this->processTitle, $start_file));
 
             // Init signal(SIGINT) handler for ctrl+c action.
-            $return_value = pcntl_signal(SIGINT, function($signo, $siginfo) use ($pid_file) {
+            $return_value = pcntl_signal(SIGINT, function ($signo, $siginfo) use ($pid_file) {
                 @unlink($pid_file);
                 exit(0);
             });
@@ -607,7 +635,6 @@ class Server
             $socket = socket_import_stream($this->socketStream);
 
             if ($socket !== false && $socket !== null) {
-
                 // 套接字可用的全量套接字选项.
                 // Available Socket Options for the socket.
                 // @doc http://php.net/manual/en/function.socket-get-option.php
@@ -699,7 +726,6 @@ class Server
     {
         // Block on master, use WNOHANG in loop will waste too much CPU.
         while ($terminated_pid = pcntl_waitpid(-1, $status, 0)) {
-
             unset($this->pids[$this->ppid][$terminated_pid]);
 
             if (! $this->daemon) {
@@ -709,7 +735,8 @@ class Server
             // TODO Do statistics here.
 
             // Fork again condition: normal exited or killed by SIGTERM.
-            // if ( pcntl_wifexited($status) || (pcntl_wifsignaled($status) && in_array(pcntl_wtermsig($status), [SIGTERM])) ) {
+            // if ( pcntl_wifexited($status) || (pcntl_wifsignaled($status)
+            // && in_array(pcntl_wtermsig($status), [SIGTERM])) ) {
             self::forkUntilReach();
             // }
         }
@@ -724,7 +751,7 @@ class Server
      */
     protected function forkUntilReach()
     {
-        while ( empty($this->pids) || (count($this->pids[$this->ppid]) < $this->count) ) {
+        while (empty($this->pids) || (count($this->pids[$this->ppid]) < $this->count)) {
             self::forkWorker();
         }
     }
@@ -781,10 +808,8 @@ class Server
             // Will extend parent handler first.
             switch ($signo) {
                 case SIGUSR1:
-
                     break;
                 case SIGUSR2:
-
                     break;
                 case SIGINT:
                 case SIGQUIT:
@@ -833,18 +858,19 @@ class Server
             $number = @stream_select($read, $write, $except, $this->selectTimeout);
 
             if ($number > 0) {
-
                 foreach ($read as $socket_stream) {
-
                     // TODO Heartbeat mechanism need timer.
 
-                    // If no pending connections: blocking I/O socket - accept() blocks the caller until a connection is present.
-                    //                         nonblocking I/O socket - accept() fails with the error EAGAIN or EWOULDBLOCK.
+                    // If no pending connections:
+                    //      blocking I/O socket - accept() blocks the caller until a connection is present.
+                    //      nonblocking I/O socket - accept() fails with the error EAGAIN or EWOULDBLOCK.
                     // In order to be notified of incoming connections on a socket, we can use select(2) or poll(2).
                     // Remote_address is set to user ip:port.
                     // `man 2 accept` seek more information if needed.
-                    if (false !== ($socket_connection = @stream_socket_accept($socket_stream, $this->acceptTimeout, $remote_address))) {
 
+                    $socket_connection = @stream_socket_accept($socket_stream, $this->acceptTimeout, $remote_address);
+
+                    if (false !== $socket_connection) {
                         // Set read operations unbuffered.
                         stream_set_read_buffer($socket_stream, 0);
 
@@ -856,7 +882,10 @@ class Server
                             while (true) {
                                 $decoded_string = WebSocket::decode($socket_connection);
                                 if ($decoded_string) {
-                                    call_user_func_array($this->onMessage, [new Connection($socket_connection), $decoded_string]);
+                                    call_user_func_array(
+                                        $this->onMessage,
+                                        [new Connection($socket_connection), $decoded_string]
+                                    );
                                 }
                             }
                         }
@@ -892,27 +921,27 @@ class Server
         if ($return_var === 0) {
             if ($output && is_array($output)) {
                 foreach ($output as $pid) {
-
                     // Gid equals to master pid is valid.
-                    if ( posix_getpgid($pid) == $this->ppid ) {
-
+                    if (posix_getpgid($pid) == $this->ppid) {
                         switch ($command_type) {
                             case 'restart':
-
                                 // Normal quit to auto restart by monitor.
                                 $child_stop_status = posix_kill($pid, SIGTERM);
                                 if (! $child_stop_status) {
-                                    throw new Exception(sprintf('Child %s process %s stop failure.', $this->processTitle, $pid));
+                                    throw new Exception(
+                                        sprintf('Child %s process %s stop failure.', $this->processTitle, $pid)
+                                    );
                                 }
 
                                 break;
                             case 'stop':
-
                                 // Force quit.
                                 // SIGKILL cant be catch, so process will not restart.
                                 $child_stop_status = posix_kill($pid, SIGKILL);
                                 if (! $child_stop_status) {
-                                    throw new Exception(sprintf('Child %s process %s stop failure.', $this->processTitle, $pid));
+                                    throw new Exception(
+                                        sprintf('Child %s process %s stop failure.', $this->processTitle, $pid)
+                                    );
                                 }
 
                                 break;
@@ -950,7 +979,11 @@ class Server
         }
 
         if (pcntl_wifsignaled($status)) {
-            $message .= sprintf('by signal %s (%s)', ($this->signals[ pcntl_wtermsig($status) ] ?? ($other_debug_signals[pcntl_wtermsig($status)] ?? 'Unknow')), pcntl_wtermsig($status));
+            $message .= sprintf(
+                'by signal %s (%s)',
+                $this->signals[pcntl_wtermsig($status)] ?? ($other_debug_signals[pcntl_wtermsig($status)] ?? 'Unknow'),
+                pcntl_wtermsig($status)
+            );
         }
 
         if (pcntl_wifstopped($status)) {
@@ -959,5 +992,4 @@ class Server
 
         echo $message . PHP_EOL;
     }
-
 }

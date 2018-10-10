@@ -14,7 +14,6 @@ $pids  = [];
 echo "Current posix_getpid is " . posix_getpid() . PHP_EOL;
 
 for ($i = 0; $i < $count; $i++) {
-
     $pid = pcntl_fork();
 
     switch ($pid) {
@@ -42,7 +41,8 @@ print_r($pids);
 
 // Monitor
 
-// WARNING: the child exit order is fixed, it not right, because waitpid will block wait the specified process to terminate using WUNTRACED.
+// WARNING: the child exit order is fixed, it not right,
+// because waitpid will block wait the specified process to terminate using WUNTRACED.
 
 //$num = 0;
 //foreach ($pids as $pid) {
@@ -78,7 +78,7 @@ do {
             $num++;
         }
     }
-} while ( count($pids) > 0 );
+} while (count($pids) > 0);
 
 echo "Total {$num} child exited." . PHP_EOL;
 
